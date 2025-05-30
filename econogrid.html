@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EconGrid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #334155; /* Darker text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+            padding: 2rem;
+            max-width: 960px; /* Slightly wider */
+            width: 100%;
+            text-align: center;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr repeat(3, minmax(80px, 1fr)); /* Adjusted column sizing */
+            grid-template-rows: 1fr repeat(3, minmax(80px, 1fr)); /* Adjusted row sizing */
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .grid-cell, .grid-header {
+            background-color: #e2e8f0; /* Lighter cell background */
+            border-radius: 0.75rem; /* Rounded corners for cells */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem;
+            min-height: 80px; /* Ensure minimum height */
+            box-sizing: border-box;
+            position: relative; /* For flag/cross positioning */
+            overflow: hidden; /* Hide overflow for flag/cross */
+        }
+        .grid-header {
+            background-color: #cbd5e1; /* Slightly darker header background */
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        .grid-header:hover {
+            background-color: #94a3b8; /* Darker on hover */
+        }
+        .grid-cell input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #94a3b8; /* Tailwind gray-400 */
+            border-radius: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #1e293b; /* Dark slate */
+            background-color: #f8fafc; /* Lighter input background */
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .grid-cell input:focus {
+            border-color: #3b82f6; /* Tailwind blue-500 */
+        }
+        .grid-cell .result-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem; /* Larger icons */
+            z-index: 10; /* Above input */
+        }
+        .grid-cell .result-icon.correct {
+            color: #22c55e; /* Green for correct */
+        }
+        .grid-cell .result-icon.incorrect {
+            color: #ef4444; /* Red for incorrect */
+        }
+        .grid-cell img.flag {
+            width: 64px; /* Standard flag size */
+            height: 64px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5; /* Below icon, above input */
+        }
+        .difficulty-buttons button {
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background-color: #60a5fa; /* Blue-400 */
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .difficulty-buttons button:hover {
+            background-color: #3b82f6; /* Blue-500 */
+            transform: translateY(-2px);
+        }
+        .difficulty-buttons button.selected {
+            background-color: #1d4ed8; /* Darker blue */
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Auto-suggestion styles */
+        .autocomplete-container {
+            position: relative;
+            width: 100%;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%; /* Position below the input */
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100; /* Ensure it's on top */
+            text-align: left;
+        }
+        .autocomplete-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            color: #334155;
+        }
+        .autocomplete-item:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 500px;
+            width: 90%;
+            text-align: left;
+            position: relative;
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+    <div class="container">
+        <h1 class="text-4xl font-extrabold mb-6 text-gray-800">EconGrid</h1>
+        <p class="text-gray-600 mb-4">Guess the country for each economic characteristic intersection.</p>
+
+        <div class="difficulty-buttons mb-8">
+            <button id="beginnerBtn" class="selected">Beginner</button>
+            <button id="econStudentBtn">Econ Student</button>
+            <button id="econMasterBtn">Econ Master</button>
+        </div>
+
+        <div class="game-info flex justify-between items-center mb-6 text-lg font-semibold text-gray-700">
+            <div id="guessesLeft" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full shadow-md">Guesses: 10</div>
+            <div id="correctGuesses" class="bg-green-100 text-green-800 px-4 py-2 rounded-full shadow-md">Correct: 0/9</div>
+        </div>
+
+        <div class="grid-container" id="gameGrid">
+            <div class="grid-cell bg-transparent shadow-none"></div>
+            <div class="grid-header col-header" data-col="0"></div>
+            <div class="grid-header col-header" data-col="1"></div>
+            <div class="grid-header col-header" data-col="2"></div>
+            <div class="grid-header row-header" data-row="0"></div>
+            <div class="grid-cell" data-row="0" data-col="0"></div>
+            <div class="grid-cell" data-row="0" data-col="1"></div>
+            <div class="grid-cell" data-row="0" data-col="2"></div>
+
+            <div class="grid-header row-header" data-row="1"></div>
+            <div class="grid-cell" data-row="1" data-col="0"></div>
+            <div class="grid-cell" data-row="1" data-col="1"></div>
+            <div class="grid-cell" data-row="1" data-col="2"></div>
+
+            <div class="grid-header row-header" data-row="2"></div>
+            <div class="grid-cell" data-row="2" data-col="0"></div>
+            <div class="grid-cell" data-row="2" data-col="1"></div>
+            <div class="grid-cell" data-row="2" data-col="2"></div>
+        </div>
+
+        <div id="gameMessage" class="mt-6 text-xl font-bold text-red-600"></div>
+    </div>
+
+    <div id="definitionModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="document.getElementById('definitionModal').classList.add('hidden')">&times;</button>
+            <h3 id="modalCategoryTitle" class="text-2xl font-bold mb-4 text-gray-800"></h3>
+            <p id="modalCategoryDefinition" class="text-gray-700"></p>
+        </div>
+    </div>
+
+    <div id="gameOverModal" class="modal-overlay hidden">
+        <div class="modal-content text-center">
+            <h3 id="gameOverTitle" class="text-3xl font-bold mb-4 text-gray-800"></h3>
+            <p id="gameOverMessage" class="text-xl text-gray-700 mb-6"></p>
+            <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition duration-300" onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Data Definitions ---
+        // Full list of countries for auto-suggestion. Includes ISO 2-letter codes for flag API.
+        const allCountries = [
+            { name: "Afghanistan", code: "AF" }, { name: "Albania", code: "AL" }, { name: "Algeria", code: "DZ" },
+            { name: "Andorra", code: "AD" }, { name: "Angola", code: "AO" }, { name: "Antigua and Barbuda", code: "AG" },
+            { name: "Argentina", code: "AR" }, { name: "Armenia", code: "AM" }, { name: "Australia", code: "AU" },
+            { name: "Austria", code: "AT" }, { name: "Azerbaijan", code: "AZ" }, { name: "Bahamas", code: "BS" },
+            { name: "Bahrain", code: "BH" }, { name: "Bangladesh", code: "BD" }, { name: "Barbados", code: "BB" },
+            { name: "Belarus", code: "BY" }, { name: "Belgium", code: "BE" }, { name: "Belize", code: "BZ" },
+            { name: "Benin", code: "BJ" }, { name: "Bhutan", code: "BT" }, { name: "Bolivia", code: "BO" },
+            { name: "Bosnia and Herzegovina", code: "BA" }, { name: "Botswana", code: "BW" }, { name: "Brazil", code: "BR" },
+            { name: "Brunei", code: "BN" }, { name: "Bulgaria", code: "BG" }, { name: "Burkina Faso", code: "BF" },
+            { name: "Burundi", code: "BI" }, { name: "Cabo Verde", code: "CV" }, { name: "Cambodia", code: "KH" },
+            { name: "Cameroon", code: "CM" }, { name: "Canada", code: "CA" }, { name: "Central African Republic", code: "CF" },
+            { name: "Chad", code: "TD" }, { name: "Chile", code: "CL" }, { name: "China", code: "CN" },
+            { name: "Colombia", code: "CO" }, { name: "Comoros", code: "KM" }, { name: "Congo (Dem. Rep.)", code: "CD" },
+            { name: "Congo (Rep.)", code: "CG" }, { name: "Costa Rica", code: "CR" }, { name: "Croatia", code: "HR" },
+            { name: "Cuba", code: "CU" }, { name: "Cyprus", code: "CY" }, { name: "Czechia", code: "CZ" },
+            { name: "Denmark", code: "DK" }, { name: "Djibouti", code: "DJ" }, { name: "Dominica", code: "DM" },
+            { name: "Dominican Republic", code: "DO" }, { name: "Ecuador", code: "EC" }, { name: "Egypt", code: "EG" },
+            { name: "El Salvador", code: "SV" }, { name: "Equatorial Guinea", code: "GQ" }, { name: "Eritrea", code: "ER" },
+            { name: "Estonia", code: "EE" }, { name: "Eswatini", code: "SZ" }, { name: "Ethiopia", code: "ET" },
+            { name: "Fiji", code: "FJ" }, { name: "Finland", code: "FI" }, { name: "France", code: "FR" },
+            { name: "Gabon", code: "GA" }, { name: "Gambia", code: "GM" }, { name: "Georgia", code: "GE" },
+            { name: "Germany", code: "DE" }, { name: "Ghana", code: "GH" }, { name: "Greece", code: "GR" },
+            { name: "Grenada", code: "GD" }, { name: "Guatemala", code: "GT" }, { name: "Guinea", code: "GN" },
+            { name: "Guinea-Bissau", code: "GW" }, { name: "Guyana", code: "GY" }, { name: "Haiti", code: "HT" },
+            { name: "Honduras", code: "HN" }, { name: "Hungary", code: "HU" }, { name: "Iceland", code: "IS" },
+            { name: "India", code: "IN" }, { name: "Indonesia", code: "ID" }, { name: "Iran", code: "IR" },
+            { name: "Iraq", code: "IQ" }, { name: "Ireland", code: "IE" }, { name: "Israel", code: "IL" },
+            { name: "Italy", code: "IT" }, { name: "Jamaica", code: "JM" }, { name: "Japan", code: "JP" },
+            { name: "Jordan", code: "JO" }, { name: "Kazakhstan", code: "KZ" }, { name: "Kenya", code: "KE" },
+            { name: "Kiribati", code: "KI" }, { name: "Kuwait", code: "KW" }, { name: "Kyrgyzstan", code: "KG" },
+            { name: "Laos", code: "LA" }, { name: "Latvia", code: "LV" }, { name: "Lebanon", code: "LB" },
+            { name: "Lesotho", code: "LS" }, { name: "Liberia", code: "LR" }, { name: "Libya", code: "LY" },
+            { name: "Liechtenstein", code: "LI" }, { name: "Lithuania", code: "LT" }, { name: "Luxembourg", code: "LU" },
+            { name: "Madagascar", code: "MG" }, { name: "Malawi", code: "MW" }, { name: "Malaysia", code: "MY" },
+            { name: "Maldives", code: "MV" }, { name: "Mali", code: "ML" }, { name: "Malta", code: "MT" },
+            { name: "Marshall Islands", code: "MH" }, { name: "Mauritania", code: "MR" }, { name: "Mauritius", code: "MU" },
+            { name: "Mexico", code: "MX" }, { name: "Micronesia", code: "FM" }, { name: "Moldova", code: "MD" },
+            { name: "Monaco", code: "MC" }, { name: "Mongolia", code: "MN" }, { name: "Montenegro", code: "ME" },
+            { name: "Morocco", code: "MA" }, { name: "Mozambique", code: "MZ" }, { name: "Myanmar", code: "MM" },
+            { name: "Namibia", code: "NA" }, { name: "Nauru", code: "NR" }, { name: "Nepal", code: "NP" },
+            { name: "Netherlands", code: "NL" }, { name: "New Zealand", code: "NZ" }, { name: "Nicaragua", code: "NI" },
+            { name: "Niger", code: "NE" }, { name: "Nigeria", code: "NG" }, { name: "North Korea", code: "KP" },
+            { name: "North Macedonia", code: "MK" }, { name: "Norway", code: "NO" }, { name: "Oman", code: "OM" },
+            { name: "Pakistan", code: "PK" }, { name: "Palau", code: "PW" }, { name: "Palestine", code: "PS" },
+            { name: "Panama", code: "PA" }, { name: "Papua New Guinea", code: "PG" }, { name: "Paraguay", code: "PY" },
+            { name: "Peru", code: "PE" }, { name: "Philippines", code: "PH" }, { name: "Poland", code: "PL" },
+            { name: "Portugal", code: "PT" }, { name: "Qatar", code: "QA" }, { name: "Romania", code: "RO" },
+            { name: "Russia", code: "RU" }, { name: "Rwanda", code: "RW" }, { name: "Saint Kitts and Nevis", code: "KN" },
+            { name: "Saint Lucia", code: "LC" }, { name: "Saint Vincent and the Grenadines", code: "VC" }, { name: "Samoa", code: "WS" },
+            { name: "San Marino", code: "SM" }, { name: "Sao Tome and Principe", code: "ST" }, { name: "Saudi Arabia", code: "SA" },
+            { name: "Senegal", code: "SN" }, { name: "Serbia", code: "RS" }, { name: "Seychelles", code: "SC" },
+            { name: "Sierra Leone", code: "SL" }, { name: "Singapore", code: "SG" }, { name: "Slovakia", code: "SK" },
+            { name: "Slovenia", code: "SI" }, { name: "Solomon Islands", code: "SB" }, { name: "Somalia", code: "SO" },
+            { name: "South Africa", code: "ZA" }, { name: "South Korea", code: "KR" }, { name: "South Sudan", code: "SS" },
+            { name: "Spain", code: "ES" }, { name: "Sri Lanka", code: "LK" }, { name: "Sudan", code: "SD" },
+            { name: "Suriname", code: "SR" }, { name: "Sweden", code: "SE" }, { name: "Switzerland", code: "CH" },
+            { name: "Syria", code: "SY" }, { name: "Taiwan", code: "TW" }, { name: "Tajikistan", code: "TJ" },
+            { name: "Tanzania", code: "TZ" }, { name: "Thailand", code: "TH" }, { name: "Timor-Leste", code: "TL" },
+            { name: "Togo", code: "TG" }, { name: "Tonga", code: "TO" }, { name: "Trinidad and Tobago", code: "TT" },
+            { name: "Tunisia", code: "TN" }, { name: "Turkey", code: "TR" }, { name: "Turkmenistan", code: "TM" },
+            { name: "Tuvalu", code: "TV" }, { name: "Uganda", code: "UG" }, { name: "Ukraine", code: "UA" },
+            { name: "United Arab Emirates", code: "AE" }, { name: "United Kingdom", code: "GB" }, { name: "United States", code: "US" },
+            { name: "Uruguay", code: "UY" }, { name: "Uzbekistan", code: "UZ" }, { name: "Vanuatu", code: "VU" },
+            { name: "Vatican City", code: "VA" }, { name: "Venezuela", code: "VE" }, { name: "Vietnam", code: "VN" },
+            { name: "Yemen", code: "YE" }, { name: "Zambia", code: "ZM" }, { name: "Zimbabwe", code: "ZW" }
+        ].sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+
+        // Simulated economic data for a diverse set of countries.
+        // Properties are boolean flags to simplify checking against categories.
+        // This data is carefully crafted to ensure valid combinations exist for the game.
+        const economicData = [
+            { name: "United States", code: "US", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: true
+            }},
+            { name: "China", code: "CN", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "India", code: "IN", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: false
+            }},
+            { name: "Germany", code: "DE", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Brazil", code: "BR", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Nigeria", code: "NG", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: true, manufacturing_high: false, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Switzerland", code: "CH", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: true,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Singapore", code: "SG", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Finland", code: "FI", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: false, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Bangladesh", code: "BD", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Chad", code: "TD", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: true,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: true, manufacturing_high: false, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: false, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Norway", code: "NO", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: true, manufacturing_high: false, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: false, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Japan", code: "JP", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: false, gov_debt_high: true, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Australia", code: "AU", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: false, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Argentina", code: "AR", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "South Africa", code: "ZA", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Canada", code: "CA", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: true, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Mexico", code: "MX", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: true, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Vietnam", code: "VN", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Egypt", code: "EG", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "New Zealand", code: "NZ", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: false, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Sweden", code: "SE", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: false, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Ethiopia", code: "ET", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: true,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: false, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: false, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Colombia", code: "CO", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: true, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "United Kingdom", code: "GB", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "France", code: "FR", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Italy", code: "IT", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: false, gov_debt_high: true, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Spain", code: "ES", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+        ].sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+
+        const categories = {
+            // Original Categories
+            developed: { name: "Developed Economy", definition: "A country with a highly developed economy, advanced technological infrastructure, and high per capita income. Often members of organizations like the OECD." },
+            high_population: { name: "High Population (100M+)", definition: "A country with a population of 100 million or more people." },
+            high_gdp_per_capita: { name: "High GDP Per Capita", definition: "A country with a high Gross Domestic Product (GDP) per person, indicating a high standard of living. (e.g., > $30,000 USD)." },
+            major_tourist_destination: { name: "Major Tourist Destination", definition: "A country that attracts a very large number of international tourists annually, contributing significantly to its economy." },
+            landlocked_country: { name: "Landlocked Country", definition: "A country that is entirely enclosed by land, having no direct access to the sea or ocean." },
+            gdp_mid_range: { name: "Mid-Range GDP", definition: "A country with a Gross Domestic Product (GDP) typically ranking within the top 20-50 globally, not among the very largest but still significant." },
+            inflation_high: { name: "High Inflation (5% +)", definition: "A country currently experiencing a high annual inflation rate, typically 5% or more, indicating a rapid increase in prices." },
+            unemployment_low: { name: "Low Unemployment (< 5%)", definition: "A country with a low unemployment rate, generally considered below 5%, indicating a strong labor market." },
+            agriculture_high: { name: "High Agricultural Sector", definition: "A country where agriculture contributes a significant portion to its GDP or employs a large percentage of its workforce." },
+            net_oil_exporter: { name: "Net Oil Exporter", definition: "A country that exports more crude oil and petroleum products than it imports." },
+            manufacturing_high: { name: "High Manufacturing Output", definition: "A country with a strong and significant manufacturing sector contributing substantially to its economy." },
+            external_debt_high: { name: "High External Debt", definition: "A country with a large amount of debt owed to foreign creditors." },
+            trade_surplus: { name: "Trade Surplus", definition: "A country that exports more goods and services than it imports, resulting in a positive balance of trade." },
+            gini_high: { name: "High Gini Coefficient", definition: "A country with a high Gini coefficient (e.g., > 0.45), indicating a high level of income inequality." },
+            current_account_deficit: { name: "Current Account Deficit", definition: "A country that imports more goods, services, and capital than it exports, resulting in a negative current account balance." },
+            gov_debt_high: { name: "High Government Debt", definition: "A country with a high level of public debt relative to its GDP." },
+            fdi_high: { name: "High FDI Inflow", definition: "A country that receives a large amount of Foreign Direct Investment, indicating attractiveness for foreign businesses." },
+            rnd_high: { name: "High R&D Investment", definition: "A country that invests a significant portion of its GDP in Research and Development, fostering innovation." },
+            net_food_importer: { name: "Net Food Importer", definition: "A country that imports more food products than it exports, relying on international markets for its food supply." },
+            ease_of_business_low: { name: "Low Ease of Doing Business Rank", definition: "A country ranked lower on the 'Ease of Doing Business' index, indicating more regulatory hurdles for businesses." },
+            remittance_high: { name: "High Remittance Recipient", definition: "A country that receives a large amount of money sent by its citizens working abroad." },
+
+            // NEW CATEGORIES - 20 additional economic categories/statistics
+            high_literacy_rate: { name: "High Adult Literacy Rate", definition: "A country where a very high percentage of the adult population can read and write (e.g., > 95%)." },
+            low_corruption_perception: { name: "Low Corruption Perception", definition: "A country perceived to have low levels of public sector corruption, often indicated by a high ranking on Transparency International's CPI." },
+            significant_tourism_revenue: { name: "Significant Tourism Revenue", definition: "A country where tourism generates a substantial portion of its national income." },
+            strong_social_safety_net: { name: "Strong Social Safety Net", definition: "A country with comprehensive government programs providing welfare, healthcare, unemployment benefits, and other social support." },
+            high_internet_penetration: { name: "High Internet Penetration", definition: "A country with a very high percentage of its population having access to and using the internet (e.g., > 80%)." },
+            renewable_energy_leader: { name: "Renewable Energy Leader", definition: "A country that is at the forefront of generating energy from renewable sources like solar, wind, or hydro." },
+            major_financial_center: { name: "Major Financial Center", definition: "A city or region within the country that serves as a globally significant hub for financial services and markets." },
+            high_life_expectancy: { name: "High Life Expectancy", definition: "A country where the average number of years a person is expected to live at birth is high (e.g., > 80 years)." },
+            low_birth_rate: { name: "Low Birth Rate", definition: "A country experiencing a low number of live births per 1,000 people per year, often leading to an aging population." },
+            significant_foreign_aid_recipient: { name: "Significant Foreign Aid Recipient", definition: "A country that relies on and receives substantial financial or material assistance from other countries or international organizations." },
+            high_urbanization_rate: { name: "High Urbanization Rate", definition: "A country where a large majority of its population resides in urban areas rather than rural areas." },
+            fast_growing_economy: { name: "Fast Growing Economy", definition: "A country whose economy (GDP) is expanding at a rapid pace, typically indicating strong development or recovery." },
+            commodity_dependent_economy: { name: "Commodity Dependent Economy", definition: "A country whose economy heavily relies on the export of a single or limited number of raw materials (e.g., oil, minerals, agricultural products)." },
+            high_gender_equality: { name: "High Gender Equality", definition: "A country with high scores on indices measuring equality between men and women in economic participation, education, health, and political empowerment." },
+            significant_remittance_outflow: { name: "Significant Remittance Outflow", definition: "A country where a large amount of money is regularly sent out by foreign workers to their home countries." },
+            strong_intellectual_property_rights: { name: "Strong Intellectual Property Rights", definition: "A country with robust legal frameworks and enforcement for patents, copyrights, trademarks, and trade secrets." },
+            high_carbon_emissions: { name: "High Carbon Emissions", definition: "A country with a high per capita emission of carbon dioxide (CO2) from the burning of fossil fuels and industrial processes." },
+            ageing_population: { name: "Ageing Population", definition: "A country where the median age of the population is increasing, and the proportion of older people is growing, often due to low birth rates and increased life expectancy." },
+            high_foreign_reserves: { name: "High Foreign Reserves", definition: "A country that holds a large amount of foreign currency, gold, and other reserve assets, indicating economic stability." },
+            strong_export_diversification: { name: "Strong Export Diversification", definition: "A country that exports a wide variety of goods and services, reducing its reliance on any single sector or product." }
+        };
+
+        // Simulated economic data for a diverse set of countries.
+        // Properties are boolean flags to simplify checking against categories.
+        // This data is carefully crafted to ensure valid combinations exist for the game.
+        // NOTE: For the newly added categories, the 'properties' for each country have been updated with plausible (but simplified for game purposes) boolean values.
+        // For a real-world application, you would need to populate these based on actual data.
+        const economicData = [
+            { name: "United States", code: "US", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: true
+            }},
+            { name: "China", code: "CN", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "India", code: "IN", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: false
+            }},
+            { name: "Germany", code: "DE", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Brazil", code: "BR", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Nigeria", code: "NG", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: true, manufacturing_high: false, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Switzerland", code: "CH", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: true,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Singapore", code: "SG", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Finland", code: "FI", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: false, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Bangladesh", code: "BD", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Chad", code: "TD", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: true,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: true, manufacturing_high: false, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: false, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Norway", code: "NO", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: true, manufacturing_high: false, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: false, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: false, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Japan", code: "JP", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: false, gov_debt_high: true, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Australia", code: "AU", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: false, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Argentina", code: "AR", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "South Africa", code: "ZA", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: false,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Canada", code: "CA", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: true, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Mexico", code: "MX", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: true, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Vietnam", code: "VN", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: true, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Egypt", code: "EG", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: true, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "New Zealand", code: "NZ", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: false, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Sweden", code: "SE", properties: {
+                developed: true, high_population: false, high_gdp_per_capita: true, major_tourist_destination: false, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: true,
+                gini_high: false, current_account_deficit: false, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: false, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: false, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Ethiopia", code: "ET", properties: {
+                developed: false, high_population: true, high_gdp_per_capita: false, major_tourist_destination: false, landlocked_country: true,
+                gdp_mid_range: false, inflation_high: true, unemployment_low: false, agriculture_high: true, net_oil_exporter: false, manufacturing_high: false, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: false, rnd_high: false, net_food_importer: true, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: false, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: true, high_urbanization_rate: false, fast_growing_economy: true, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "Colombia", code: "CO", properties: {
+                developed: false, high_population: false, high_gdp_per_capita: false, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: true, inflation_high: false, unemployment_low: false, agriculture_high: true, net_oil_exporter: true, manufacturing_high: true, external_debt_high: true, trade_surplus: false,
+                gini_high: true, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: true, remittance_high: true,
+                high_literacy_rate: false, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: false, high_internet_penetration: false, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: false, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: true, high_gender_equality: false, significant_remittance_outflow: false, strong_intellectual_property_rights: false, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: false, strong_export_diversification: false
+            }},
+            { name: "United Kingdom", code: "GB", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: true, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: false, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: false, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "France", code: "FR", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: true, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: true, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: true, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: true, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: true, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Italy", code: "IT", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: false, gov_debt_high: true, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: false, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+            { name: "Spain", code: "ES", properties: {
+                developed: true, high_population: true, high_gdp_per_capita: true, major_tourist_destination: true, landlocked_country: false,
+                gdp_mid_range: false, inflation_high: false, unemployment_low: false, agriculture_high: false, net_oil_exporter: false, manufacturing_high: true, external_debt_high: false, trade_surplus: false,
+                gini_high: false, current_account_deficit: true, gov_debt_high: false, fdi_high: true, rnd_high: false, net_food_importer: false, ease_of_business_low: false, remittance_high: false,
+                high_literacy_rate: true, low_corruption_perception: false, significant_tourism_revenue: true, strong_social_safety_net: true, high_internet_penetration: true, renewable_energy_leader: true, major_financial_center: false, high_life_expectancy: true, low_birth_rate: true, significant_foreign_aid_recipient: false, high_urbanization_rate: true, fast_growing_economy: false, commodity_dependent_economy: false, high_gender_equality: false, significant_remittance_outflow: true, strong_intellectual_property_rights: true, high_carbon_emissions: false, ageing_population: true, high_foreign_reserves: true, strong_export_diversification: true
+            }},
+        ].sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+
+
+        const categories = {
+            // Original Categories
+            developed: { name: "Developed Economy", definition: "A country with a highly developed economy, advanced technological infrastructure, and high per capita income. Often members of organizations like the OECD." },
+            high_population: { name: "High Population (100M+)", definition: "A country with a population of 100 million or more people." },
+            high_gdp_per_capita: { name: "High GDP Per Capita", definition: "A country with a high Gross Domestic Product (GDP) per person, indicating a high standard of living. (e.g., > $30,000 USD)." },
+            major_tourist_destination: { name: "Major Tourist Destination", definition: "A country that attracts a very large number of international tourists annually, contributing significantly to its economy." },
+            landlocked_country: { name: "Landlocked Country", definition: "A country that is entirely enclosed by land, having no direct access to the sea or ocean." },
+            gdp_mid_range: { name: "Mid-Range GDP", definition: "A country with a Gross Domestic Product (GDP) typically ranking within the top 20-50 globally, not among the very largest but still significant." },
+            inflation_high: { name: "High Inflation (5% +)", definition: "A country currently experiencing a high annual inflation rate, typically 5% or more, indicating a rapid increase in prices." },
+            unemployment_low: { name: "Low Unemployment (< 5%)", definition: "A country with a low unemployment rate, generally considered below 5%, indicating a strong labor market." },
+            agriculture_high: { name: "High Agricultural Sector", definition: "A country where agriculture contributes a significant portion to its GDP or employs a large percentage of its workforce." },
+            net_oil_exporter: { name: "Net Oil Exporter", definition: "A country that exports more crude oil and petroleum products than it imports." },
+            manufacturing_high: { name: "High Manufacturing Output", definition: "A country with a strong and significant manufacturing sector contributing substantially to its economy." },
+            external_debt_high: { name: "High External Debt", definition: "A country with a large amount of debt owed to foreign creditors." },
+            trade_surplus: { name: "Trade Surplus", definition: "A country that exports more goods and services than it imports, resulting in a positive balance of trade." },
+            gini_high: { name: "High Gini Coefficient", definition: "A country with a high Gini coefficient (e.g., > 0.45), indicating a high level of income inequality." },
+            current_account_deficit: { name: "Current Account Deficit", definition: "A country that imports more goods, services, and capital than it exports, resulting in a negative current account balance." },
+            gov_debt_high: { name: "High Government Debt", definition: "A country with a high level of public debt relative to its GDP." },
+            fdi_high: "High FDI Inflow", definition: "A country that receives a large amount of Foreign Direct Investment, indicating attractiveness for foreign businesses." },
+            rnd_high: { name: "High R&D Investment", definition: "A country that invests a significant portion of its GDP in Research and Development, fostering innovation." },
+            net_food_importer: { name: "Net Food Importer", definition: "A country that imports more food products than it exports, relying on international markets for its food supply." },
+            ease_of_business_low: { name: "Low Ease of Doing Business Rank", definition: "A country ranked lower on the 'Ease of Doing Business' index, indicating more regulatory hurdles for businesses." },
+            remittance_high: { name: "High Remittance Recipient", definition: "A country that receives a large amount of money sent by its citizens working abroad." },
+
+            // NEW CATEGORIES
+            high_literacy_rate: { name: "High Adult Literacy Rate", definition: "A country where a very high percentage of the adult population can read and write (e.g., > 95%)." },
+            low_corruption_perception: { name: "Low Corruption Perception", definition: "A country perceived to have low levels of public sector corruption, often indicated by a high ranking on Transparency International's CPI." },
+            significant_tourism_revenue: { name: "Significant Tourism Revenue", definition: "A country where tourism generates a substantial portion of its national income." },
+            strong_social_safety_net: { name: "Strong Social Safety Net", definition: "A country with comprehensive government programs providing welfare, healthcare, unemployment benefits, and other social support." },
+            high_internet_penetration: { name: "High Internet Penetration", definition: "A country with a very high percentage of its population having access to and using the internet (e.g., > 80%)." },
+            renewable_energy_leader: { name: "Renewable Energy Leader", definition: "A country that is at the forefront of generating energy from renewable sources like solar, wind, or hydro." },
+            major_financial_center: { name: "Major Financial Center", definition: "A city or region within the country that serves as a globally significant hub for financial services and markets." },
+            high_life_expectancy: { name: "High Life Expectancy", definition: "A country where the average number of years a person is expected to live at birth is high (e.g., > 80 years)." },
+            low_birth_rate: { name: "Low Birth Rate", definition: "A country experiencing a low number of live births per 1,000 people per year, often leading to an aging population." },
+            significant_foreign_aid_recipient: { name: "Significant Foreign Aid Recipient", definition: "A country that relies on and receives substantial financial or material assistance from other countries or international organizations." },
+            high_urbanization_rate: { name: "High Urbanization Rate", definition: "A country where a large majority of its population resides in urban areas rather than rural areas." },
+            fast_growing_economy: { name: "Fast Growing Economy", definition: "A country whose economy (GDP) is expanding at a rapid pace, typically indicating strong development or recovery." },
+            commodity_dependent_economy: { name: "Commodity Dependent Economy", definition: "A country whose economy heavily relies on the export of a single or limited number of raw materials (e.g., oil, minerals, agricultural products)." },
+            high_gender_equality: { name: "High Gender Equality", definition: "A country with high scores on indices measuring equality between men and women in economic participation, education, health, and political empowerment." },
+            significant_remittance_outflow: { name: "Significant Remittance Outflow", definition: "A country where a large amount of money is regularly sent out by foreign workers to their home countries." },
+            strong_intellectual_property_rights: { name: "Strong Intellectual Property Rights", definition: "A country with robust legal frameworks and enforcement for patents, copyrights, trademarks, and trade secrets." },
+            high_carbon_emissions: { name: "High Carbon Emissions", definition: "A country with a high per capita emission of carbon dioxide (CO2) from the burning of fossil fuels and industrial processes." },
+            ageing_population: { name: "Ageing Population", definition: "A country where the median age of the population is increasing, and the proportion of older people is growing, often due to low birth rates and increased life expectancy." },
+            high_foreign_reserves: { name: "High Foreign Reserves", definition: "A country that holds a large amount of foreign currency, gold, and other reserve assets, indicating economic stability." },
+            strong_export_diversification: { name: "Strong Export Diversification", definition: "A country that exports a wide variety of goods and services, reducing its reliance on any single sector or product." }
+        };
+
+        // Current game state
+        let currentGridCountries = [];
+        let currentGridCategories = { rows: [], cols: [] };
+        let correctCount = 0;
+        let guessesLeft = 10;
+        let currentDifficulty = 'beginner'; // Default difficulty
+
+        // DOM Elements
+        const gameGrid = document.getElementById('gameGrid');
+        const guessesLeftSpan = document.getElementById('guessesLeft');
+        const correctGuessesSpan = document.getElementById('correctGuesses');
+        const gameMessage = document.getElementById('gameMessage');
+        const definitionModal = document.getElementById('definitionModal');
+        const modalCategoryTitle = document.getElementById('modalCategoryTitle');
+        const modalCategoryDefinition = document.getElementById('modalCategoryDefinition');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const beginnerBtn = document.getElementById('beginnerBtn');
+        const econStudentBtn = document.getElementById('econStudentBtn');
+        const econMasterBtn = document.getElementById('econMasterBtn');
+
+
+        // --- Game Logic Functions ---
+
+        function getShuffled(arr) {
+            return arr.sort(() => 0.5 - Math.random());
+        }
+
+        function selectRandomCategories(count) {
+            const allCategoryKeys = Object.keys(categories);
+            const shuffledCategories = getShuffled(allCategoryKeys);
+            return shuffledCategories.slice(0, count).map(key => ({
+                key: key,
+                name: categories[key].name,
+                definition: categories[key].definition
+            }));
+        }
+
+        function selectRandomCountries(count) {
+            const shuffledCountries = getShuffled(economicData);
+            return shuffledCountries.slice(0, count);
+        }
+
+        function initializeGame(difficulty) {
+            currentDifficulty = difficulty;
+            correctCount = 0;
+            guessesLeft = 10;
+            gameMessage.textContent = '';
+            gameOverModal.classList.add('hidden');
+
+            // Reset difficulty buttons
+            beginnerBtn.classList.remove('selected');
+            econStudentBtn.classList.remove('selected');
+            econMasterBtn.classList.remove('selected');
+
+            // Set selected difficulty button
+            if (difficulty === 'beginner') beginnerBtn.classList.add('selected');
+            if (difficulty === 'econStudent') econStudentBtn.classList.add('selected');
+            if (difficulty === 'econMaster') econMaster.classList.add('selected');
+
+            let numCategories, numCountries;
+            if (difficulty === 'beginner') {
+                numCategories = 3;
+                numCountries = 3;
+            } else if (difficulty === 'econStudent') {
+                numCategories = 4; // Or more, adjust as needed
+                numCountries = 4;
+            } else { // econMaster
+                numCategories = 5; // Or more
+                numCountries = 5;
+            }
+            // For now, keeping the 3x3 grid structure as per HTML,
+            // but the logic can be extended to dynamically create a larger grid.
+            numCategories = 3;
+            numCountries = 3;
+
+
+            currentGridCategories.cols = selectRandomCategories(numCategories);
+            currentGridCategories.rows = selectRandomCategories(numCategories);
+            currentGridCountries = selectRandomCountries(numCountries);
+
+            // Ensure there's at least one country that matches each property selected.
+            // This is a simplification; a robust game would pre-check for solvable grids.
+            // For now, we assume economicData has enough diversity.
+
+            renderGrid();
+            updateGameInfo();
+        }
+
+        function renderGrid() {
+            gameGrid.innerHTML = '<div class="grid-cell bg-transparent shadow-none"></div>'; // Top-left empty cell
+
+            // Render column headers
+            currentGridCategories.cols.forEach((category, index) => {
+                const colHeader = document.createElement('div');
+                colHeader.className = 'grid-header col-header';
+                colHeader.dataset.col = index;
+                colHeader.textContent = category.name;
+                colHeader.title = category.definition; // Tooltip for definition
+                colHeader.addEventListener('click', () => showCategoryDefinition(category));
+                gameGrid.appendChild(colHeader);
+            });
+
+            // Render row headers and input cells
+            currentGridCategories.rows.forEach((rowCategory, rowIndex) => {
+                const rowHeader = document.createElement('div');
+                rowHeader.className = 'grid-header row-header';
+                rowHeader.dataset.row = rowIndex;
+                rowHeader.textContent = rowCategory.name;
+                rowHeader.title = rowCategory.definition; // Tooltip for definition
+                rowHeader.addEventListener('click', () => showCategoryDefinition(rowCategory));
+                gameGrid.appendChild(rowHeader);
+
+                currentGridCategories.cols.forEach((colCategory, colIndex) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = rowIndex;
+                    cell.dataset.col = colIndex;
+
+                    const autocompleteContainer = document.createElement('div');
+                    autocompleteContainer.className = 'autocomplete-container';
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = 'Enter country';
+                    input.spellcheck = false;
+                    input.autocomplete = 'off'; // Disable browser autocomplete
+                    input.dataset.rowIndex = rowIndex;
+                    input.dataset.colIndex = colIndex;
+                    input.addEventListener('input', handleInput);
+                    input.addEventListener('keydown', handleKeyDown);
+                    input.addEventListener('focus', handleFocus);
+
+                    const autocompleteList = document.createElement('div');
+                    autocompleteList.className = 'autocomplete-list hidden';
+                    autocompleteList.dataset.rowIndex = rowIndex;
+                    autocompleteList.dataset.colIndex = colIndex;
+
+                    autocompleteContainer.appendChild(input);
+                    autocompleteContainer.appendChild(autocompleteList);
+                    cell.appendChild(autocompleteContainer);
+
+                    gameGrid.appendChild(cell);
+                });
+            });
+
+            // Restore saved state if available and matches difficulty
+            const savedGridCategories = JSON.parse(localStorage.getItem('gridCategories'));
+            const savedDifficulty = localStorage.getItem('currentDifficulty');
+
+            if (savedGridCategories && savedDifficulty === currentDifficulty) {
+                currentGridCategories = savedGridCategories;
+                const savedCorrectCount = parseInt(localStorage.getItem('correctCount') || '0');
+                const savedGuessesLeft = parseInt(localStorage.getItem('guessesLeft') || '10');
+                const savedCells = JSON.parse(localStorage.getItem('gridCells') || '[]');
+
+                correctCount = savedCorrectCount;
+                guessesLeft = savedGuessesLeft;
+
+                // Re-render headers based on restored categories
+                gameGrid.innerHTML = '<div class="grid-cell bg-transparent shadow-none"></div>';
+                currentGridCategories.cols.forEach((category, index) => {
+                    const colHeader = document.createElement('div');
+                    colHeader.className = 'grid-header col-header';
+                    colHeader.dataset.col = index;
+                    colHeader.textContent = category.name;
+                    colHeader.title = category.definition;
+                    colHeader.addEventListener('click', () => showCategoryDefinition(category));
+                    gameGrid.appendChild(colHeader);
+                });
+                currentGridCategories.rows.forEach((rowCategory, rowIndex) => {
+                    const rowHeader = document.createElement('div');
+                    rowHeader.className = 'grid-header row-header';
+                    rowHeader.dataset.row = rowIndex;
+                    rowHeader.textContent = rowCategory.name;
+                    rowHeader.title = rowCategory.definition;
+                    rowHeader.addEventListener('click', () => showCategoryDefinition(rowCategory));
+                    gameGrid.appendChild(rowHeader);
+
+                    currentGridCategories.cols.forEach((colCategory, colIndex) => {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.dataset.row = rowIndex;
+                        cell.dataset.col = colIndex;
+                        const savedCellState = savedCells.find(sc => sc.row === rowIndex && sc.col === colIndex);
+
+                        if (savedCellState && savedCellState.isCorrect) {
+                            cell.innerHTML = `<img src="https://flagsapi.com/${savedCellState.countryCode}/flat/64.png" class="flag" alt="${savedCellState.countryName} flag">`;
+                            cell.classList.add('correct');
+                        } else if (savedCellState && savedCellState.attempted) {
+                            const autocompleteContainer = document.createElement('div');
+                            autocompleteContainer.className = 'autocomplete-container';
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.placeholder = 'Enter country';
+                            input.spellcheck = false;
+                            input.autocomplete = 'off';
+                            input.dataset.rowIndex = rowIndex;
+                            input.dataset.colIndex = colIndex;
+                            input.value = savedCellState.lastAttempt || '';
+                            input.addEventListener('input', handleInput);
+                            input.addEventListener('keydown', handleKeyDown);
+                            input.addEventListener('focus', handleFocus);
+                            const autocompleteList = document.createElement('div');
+                            autocompleteList.className = 'autocomplete-list hidden';
+                            autocompleteList.dataset.rowIndex = rowIndex;
+                            autocompleteList.dataset.colIndex = colIndex;
+                            autocompleteContainer.appendChild(input);
+                            autocompleteContainer.appendChild(autocompleteList);
+                            cell.appendChild(autocompleteContainer);
+                            cell.innerHTML += `<i class="result-icon fas fa-times incorrect"></i>`;
+                        } else {
+                            const autocompleteContainer = document.createElement('div');
+                            autocompleteContainer.className = 'autocomplete-container';
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.placeholder = 'Enter country';
+                            input.spellcheck = false;
+                            input.autocomplete = 'off';
+                            input.dataset.rowIndex = rowIndex;
+                            input.dataset.colIndex = colIndex;
+                            input.addEventListener('input', handleInput);
+                            input.addEventListener('keydown', handleKeyDown);
+                            input.addEventListener('focus', handleFocus);
+                            const autocompleteList = document.createElement('div');
+                            autocompleteList.className = 'autocomplete-list hidden';
+                            autocompleteList.dataset.rowIndex = rowIndex;
+                            autocompleteList.dataset.colIndex = colIndex;
+                            autocompleteContainer.appendChild(input);
+                            autocompleteContainer.appendChild(autocompleteList);
+                            cell.appendChild(autocompleteContainer);
+                        }
+                        gameGrid.appendChild(cell);
+                    });
+                });
+            }
+            saveGameState(); // Save initial or restored state
+        }
+
+
+        function updateGameInfo() {
+            guessesLeftSpan.textContent = `Guesses: ${guessesLeft}`;
+            correctGuessesSpan.textContent = `Correct: ${correctCount}/9`; // Always 9 cells for 3x3 grid
+        }
+
+        function checkWinLoss() {
+            if (correctCount === 9) {
+                gameOverTitle.textContent = 'Congratulations!';
+                gameOverMessage.textContent = 'You correctly identified all countries!';
+                gameOverModal.classList.remove('hidden');
+            } else if (guessesLeft === 0) {
+                gameOverTitle.textContent = 'Game Over!';
+                gameOverMessage.textContent = 'You ran out of guesses. Try again!';
+                gameOverModal.classList.remove('hidden');
+            }
+        }
+
+        function showCategoryDefinition(category) {
+            modalCategoryTitle.textContent = category.name;
+            modalCategoryDefinition.textContent = category.definition;
+            definitionModal.classList.remove('hidden');
+        }
+
+        function hideCategoryDefinition() {
+            definitionModal.classList.add('hidden');
+        }
+
+        function saveGameState() {
+            const gridCellsState = [];
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                if (!isNaN(row) && !isNaN(col)) {
+                    const input = cell.querySelector('input');
+                    const isCorrect = cell.classList.contains('correct');
+                    const flagImg = cell.querySelector('img.flag');
+                    let countryName = '';
+                    let countryCode = '';
+                    let lastAttempt = input ? input.value : '';
+
+                    if (isCorrect && flagImg) {
+                        countryName = flagImg.alt.replace(' flag', '');
+                        countryCode = flagImg.src.split('/').slice(-2, -1)[0];
+                        lastAttempt = countryName; // Store correct answer
+                    } else if (input) {
+                        lastAttempt = input.value;
+                    }
+
+                    gridCellsState.push({
+                        row: row,
+                        col: col,
+                        isCorrect: isCorrect,
+                        attempted: cell.querySelector('.result-icon.incorrect') !== null,
+                        countryName: countryName,
+                        countryCode: countryCode,
+                        lastAttempt: lastAttempt
+                    });
+                }
+            });
+
+            localStorage.setItem('gridCategories', JSON.stringify(currentGridCategories));
+            localStorage.setItem('correctCount', correctCount);
+            localStorage.setItem('guessesLeft', guessesLeft);
+            localStorage.setItem('gridCells', JSON.stringify(gridCellsState));
+            localStorage.setItem('currentDifficulty', currentDifficulty);
+        }
+
+        // --- Autocomplete and Input Handling ---
+
+        function handleInput(event) {
+            const input = event.target;
+            const rowIndex = parseInt(input.dataset.rowIndex);
+            const colIndex = parseInt(input.dataset.colIndex);
+            const autocompleteList = document.querySelector(`.autocomplete-list[data-row="${rowIndex}"][data-col="${colIndex}"]`);
+            const searchTerm = input.value.toLowerCase();
+
+            autocompleteList.innerHTML = '';
+            autocompleteList.classList.add('hidden');
+
+            if (searchTerm.length === 0) {
+                return;
+            }
+
+            const filteredCountries = allCountries.filter(country =>
+                country.name.toLowerCase().includes(searchTerm)
+            ).slice(0, 5); // Limit suggestions to 5
+
+            if (filteredCountries.length > 0) {
+                autocompleteList.classList.remove('hidden');
+                filteredCountries.forEach(country => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.textContent = country.name;
+                    item.addEventListener('click', () => {
+                        input.value = country.name;
+                        autocompleteList.classList.add('hidden');
+                        checkAnswer(input, country);
+                    });
+                    autocompleteList.appendChild(item);
+                });
+            }
+        }
+
+        function handleKeyDown(event) {
+            // Only 'Enter' key triggers checkAnswer
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent form submission
+                const input = event.target;
+                const countryName = input.value.trim();
+                const selectedCountry = allCountries.find(country => country.name.toLowerCase() === countryName.toLowerCase());
+                if (selectedCountry) {
+                    checkAnswer(input, selectedCountry);
+                    hideAutocomplete(input);
+                } else {
+                    // Optionally provide feedback for invalid country
+                    gameMessage.textContent = 'Please select a valid country from the suggestions or check spelling.';
+                    setTimeout(() => gameMessage.textContent = '', 3000);
+                }
+            } else if (event.key === 'Escape') {
+                hideAutocomplete(event.target);
+            }
+        }
+
+        function handleFocus(event) {
+            // Re-show suggestions on focus if input has value
+            const input = event.target;
+            if (input.value.length > 0) {
+                handleInput(event);
+            }
+        }
+
+        function hideAutocomplete(input) {
+            const rowIndex = parseInt(input.dataset.rowIndex);
+            const colIndex = parseInt(input.dataset.colIndex);
+            const autocompleteList = document.querySelector(`.autocomplete-list[data-row="${rowIndex}"][data-col="${colIndex}"]`);
+            if (autocompleteList) {
+                autocompleteList.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('click', (event) => {
+            // Hide autocomplete lists if click is outside of an input or autocomplete list
+            if (!event.target.closest('.autocomplete-container')) {
+                document.querySelectorAll('.autocomplete-list').forEach(list => {
+                    list.classList.add('hidden');
+                });
+            }
+            // Hide modal if clicked outside content
+            if (event.target === definitionModal) {
+                hideCategoryDefinition();
+            }
+            if (event.target === gameOverModal) {
+                gameOverModal.classList.add('hidden');
+            }
+        });
+
+
+        function checkAnswer(inputElement, guessedCountry) {
+            const cell = inputElement.closest('.grid-cell');
+            const rowIndex = parseInt(cell.dataset.row);
+            const colIndex = parseInt(cell.dataset.col);
+
+            const rowCategory = currentGridCategories.rows[rowIndex];
+            const colCategory = currentGridCategories.cols[colIndex];
+
+            // Check if the guessed country has both properties
+            const isCorrect = guessedCountry.properties[rowCategory.key] && guessedCountry.properties[colCategory.key];
+
+            // Clear any previous icons
+            const existingIcon = cell.querySelector('.result-icon');
+            if (existingIcon) {
+                existingIcon.remove();
+            }
+
+            if (isCorrect) {
+                if (!cell.classList.contains('correct')) { // Prevent re-counting if already correct
+                    correctCount++;
+                    cell.classList.add('correct');
+                    inputElement.style.display = 'none'; // Hide input
+                    // Display flag
+                    const flagImg = document.createElement('img');
+                    flagImg.src = `https://flagsapi.com/${guessedCountry.code}/flat/64.png`;
+                    flagImg.alt = `${guessedCountry.name} flag`;
+                    flagImg.className = 'flag';
+                    cell.appendChild(flagImg);
+                }
+            } else {
+                if (!cell.classList.contains('correct')) { // Only deduct if not already correct
+                    guessesLeft--;
+                    cell.classList.add('incorrect'); // Mark cell as incorrect (for visual feedback)
+                    // Add incorrect icon
+                    const incorrectIcon = document.createElement('i');
+                    incorrectIcon.className = 'result-icon fas fa-times incorrect';
+                    cell.appendChild(incorrectIcon);
+                    gameMessage.textContent = 'Incorrect! Try again.';
+                    setTimeout(() => gameMessage.textContent = '', 2000); // Clear message after 2 seconds
+                }
+            }
+
+            updateGameInfo();
+            saveGameState(); // Save state after each attempt
+            checkWinLoss();
+        }
+
+        // --- Event Listeners and Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            beginnerBtn.addEventListener('click', () => initializeGame('beginner'));
+            econStudentBtn.addEventListener('click', () => initializeGame('econStudent'));
+            econMasterBtn.addEventListener('click', () => initializeGame('econMaster'));
+
+            // Initialize game on page load with default difficulty
+            initializeGame('beginner');
+        });
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                hideCategoryDefinition();
+                gameOverModal.classList.add('hidden'); // Also hide game over modal
+            }
+        });
+
+        // Close modal by clicking outside content
+        definitionModal.addEventListener('click', (event) => {
+            if (event.target === definitionModal) {
+                hideCategoryDefinition();
+            }
+        });
+        gameOverModal.addEventListener('click', (event) => {
+            if (event.target === gameOverModal) {
+                gameOverModal.classList.add('hidden');
+            }
+        });
+
+    </script>
+</body>
+</html>
