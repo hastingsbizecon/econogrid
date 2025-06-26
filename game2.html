@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <title>EconoGrid</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -148,6 +147,7 @@
         /* Title and Logo */
         .title-container {
             display: flex;
+            flex-direction: column; /* Changed to column to stack elements vertically */
             align-items: center;
             justify-content: center;
             gap: 0.75rem; /* Space between logo and title */
@@ -309,14 +309,22 @@
 <body class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
     <div class="container">
         <div class="title-container">
-            <div class="funky-logo">
-                <span class="e-letter">E</span>
-                <span class="g-letter">G</span>
-                <div class="diagram-line"></div>
-                <div class="diagram-dot start"></div>
-                <div class="diagram-dot end"></div>
+            <div class="flex items-center justify-center gap-0.75rem"> <!-- Flex container for logo and title -->
+                <div class="funky-logo">
+                    <span class="e-letter">E</span>
+                    <span class="g-letter">G</span>
+                    <div class="diagram-line"></div>
+                    <div class="diagram-dot start"></div>
+                    <div class="diagram-dot end"></div>
+                </div>
+                <h1 class="text-4xl font-extrabold text-gray-800">EconoGrid</h1>
             </div>
-            <h1 class="text-4xl font-extrabold text-gray-800">EconoGrid</h1>
+            <!-- New content added here -->
+            <div class="mt-2 text-gray-600 text-sm">brought to you by</div>
+            <a href="https://hastingsbizecon.wordpress.com/" target="_blank" rel="noopener noreferrer">
+                <img src="hbe 25 banner.png-a2fab06e-2d6d-42d4-80bc-31bd54b48312" alt="Hastings Biz Econ Logo" class="w-48 h-auto mx-auto my-2 rounded-lg shadow-md">
+            </a>
+            <!-- End of new content -->
         </div>
         <p class="text-gray-600 mb-4">Guess the country for each economic characteristic intersection.</p>
 
