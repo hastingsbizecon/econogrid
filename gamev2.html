@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EconoGrid</title>
+    <link rel="icon" href="https://hastingsbizecon.github.io/econogrid/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f4f6fa;
+            --surface: #ffffff;
+            --surface-hover: #f8faff;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --text-faint: #94a3b8;
+            --blue: #3b82f6;
+            --blue-light: #eff6ff;
+            --blue-dark: #1d4ed8;
+            --green: #22c55e;
+            --green-light: #f0fdf4;
+            --red: #ef4444;
+            --red-light: #fef2f2;
+            --amber: #f59e0b;
+            --amber-light: #fffbeb;
+            --purple: #8b5cf6;
+            --purple-light: #f5f3ff;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 1.5rem 1rem 3rem;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: white;
+            letter-spacing: -1px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -1px;
+        }
+
+        .logo-text span { color: var(--blue); }
+
+        .tagline {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .brand-link {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .brand-link img {
+            height: 36px;
+            width: auto;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ── Difficulty selector ── */
+        .difficulty-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 0.375rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.25rem;
+        }
+
+        .diff-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 0 0.5rem;
+            white-space: nowrap;
+        }
+
+        .diff-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .diff-btn:hover:not(.active) {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .diff-btn.active.easy   { background: var(--green-light); color: #15803d; }
+        .diff-btn.active.medium { background: var(--amber-light);  color: #92400e; }
+        .diff-btn.active.hard   { background: var(--red-light);    color: #991b1b; }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .stat-value.guesses { color: var(--blue); }
+        .stat-value.correct { color: var(--green); }
+        .stat-value.streak  { color: var(--purple); }
+        .stat-value.clues   { color: var(--amber); }
+
+        /* ── Progress bar ── */
+        .progress-wrap {
+            background: var(--border);
+            border-radius: 999px;
+            height: 5px;
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--green);
+            border-radius: 999px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        /* ── Grid ── */
+        .grid-outer {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1rem;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: 160px repeat(3, 1fr);
+            grid-template-rows: 80px repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .corner-cell {
+            background: transparent;
+        }
+
+        .col-header, .row-header {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.625rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+            text-align: center;
+            gap: 4px;
+        }
+
+        .col-header:hover, .row-header:hover {
+            background: var(--blue-light);
+            border-color: #93c5fd;
+        }
+
+        .header-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .header-count {
+            font-size: 0.625rem;
+            font-weight: 500;
+            color: var(--text-faint);
+        }
+
+        .diff-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .diff-dot.easy   { background: var(--green); }
+        .diff-dot.medium { background: var(--amber); }
+        .diff-dot.hard   { background: var(--red); }
+
+        .row-header { flex-direction: row; text-align: left; gap: 6px; }
+        .row-header .header-name { text-align: left; flex: 1; }
+
+        /* ── Grid cells ── */
+        .grid-cell {
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0.5rem;
+            position: relative;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            gap: 4px;
+        }
+
+        .grid-cell:focus-within {
+            border-color: var(--blue);
+            background: var(--blue-light);
+        }
+
+        .grid-cell.correct-cell {
+            background: var(--green-light);
+            border-color: #86efac;
+            animation: correctPulse 0.5s ease;
+        }
+
+        .grid-cell.wrong-flash {
+            animation: wrongFlash 0.4s ease;
+        }
+
+        @keyframes correctPulse {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrongFlash {
+            0%, 100% { background: var(--bg); }
+            40%       { background: var(--red-light); border-color: #fca5a5; }
+        }
+
+        /* Autocomplete */
+        .autocomplete-wrap {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .country-input {
+            width: 100%;
+            padding: 0.4rem 0.5rem;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8125rem;
+            color: var(--text);
+            background: var(--surface);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .country-input:focus { border-color: var(--blue); }
+        .country-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .autocomplete-list {
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0; right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 200;
+        }
+
+        .autocomplete-list.hidden { display: none; }
+
+        .autocomplete-item {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8125rem;
+            cursor: pointer;
+            color: var(--text);
+            transition: background 0.1s;
+        }
+
+        .autocomplete-item:hover { background: var(--blue-light); }
+
+        /* Cell results */
+        .cell-result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .cell-result.hidden { display: none; }
+
+        .flag-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 6px;
+            object-fit: cover;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .correct-country-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #15803d;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .correct-tick {
+            font-size: 1.25rem;
+            color: var(--green);
+        }
+
+        /* Clue button */
+        .clue-btn {
+            margin-top: auto;
+            padding: 0.3rem 0.6rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            border: 1px solid #fbbf24;
+            background: var(--amber-light);
+            color: #92400e;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            align-self: flex-start;
+        }
+
+        .clue-btn:hover:not(:disabled) {
+            background: #fef3c7;
+            border-color: var(--amber);
+        }
+
+        .clue-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ── Message bar ── */
+        .message-bar {
+            min-height: 44px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .message-bar.success { background: var(--green-light); border-color: #86efac; color: #15803d; }
+        .message-bar.error   { background: var(--red-light);   border-color: #fca5a5; color: #991b1b; }
+        .message-bar.clue    { background: var(--blue-light);  border-color: #93c5fd; color: var(--blue-dark); }
+        .message-bar.info    { background: var(--purple-light); border-color: #c4b5fd; color: #5b21b6; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.hidden { display: none; }
+
+        .modal-box {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            padding: 1.75rem;
+            max-width: 480px;
+            width: 100%;
+            position: relative;
+            animation: modalIn 0.2s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: none; border: none;
+            font-size: 1.25rem; cursor: pointer;
+            color: var(--text-muted); line-height: 1;
+            padding: 0.25rem;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+        .modal-close:hover { background: var(--bg); }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.625rem;
+        }
+
+        .modal-body {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* ── Game Over Modal ── */
+        .gameover-score {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1.25rem 0;
+        }
+
+        .gameover-stat {
+            text-align: center;
+        }
+
+        .gameover-stat .big {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .gameover-stat .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .gameover-answers {
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 0.875rem;
+            margin: 1rem 0;
+        }
+
+        .gameover-answers h4 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .answer-cell {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.375rem 0.5rem;
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .answer-cell.solved {
+            background: var(--green-light);
+            border-color: #86efac;
+            color: #15803d;
+            font-weight: 600;
+        }
+
+        .play-again-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.1s ease;
+            margin-top: 0.5rem;
+        }
+
+        .play-again-btn:hover { background: var(--blue-dark); }
+        .play-again-btn:active { transform: scale(0.98); }
+
+        /* ── Responsive ── */
+        @media (max-width: 680px) {
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+
+            .game-grid {
+                grid-template-columns: 100px repeat(3, 1fr);
+                grid-template-rows: 70px repeat(3, 1fr);
+                gap: 4px;
+            }
+
+            .header-name { font-size: 0.6875rem; }
+            .grid-cell   { min-height: 90px; padding: 0.375rem; }
+            .country-input { font-size: 0.75rem; }
+            .flag-img { width: 36px; height: 36px; }
+        }
+
+        @media (max-width: 480px) {
+            .game-grid { grid-template-columns: 80px repeat(3, 1fr); }
+            .logo-text { font-size: 1.5rem; }
+            .stats-bar { gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo-row">
+            <div class="logo-icon">EG</div>
+            <div class="logo-text">Econo<span>Grid</span></div>
+        </div>
+        <div class="tagline">Guess the country for each economic intersection</div>
+        <a class="brand-link" href="https://hastingsbizecon.wordpress.com/" target="_blank" rel="noopener noreferrer">
+            <img src="https://hastingsbizecon.github.io/econogrid/hbe%2025%20banner.png" alt="Hastings Biz Econ">
+        </a>
+    </div>
+
+    <!-- Difficulty selector -->
+    <div class="difficulty-row">
+        <span class="diff-label">Difficulty:</span>
+        <button class="diff-btn active easy" data-diff="easy" onclick="setDifficulty('easy')">🟢 Easy</button>
+        <button class="diff-btn medium" data-diff="medium" onclick="setDifficulty('medium')">🟡 Medium</button>
+        <button class="diff-btn hard" data-diff="hard" onclick="setDifficulty('hard')">🔴 Hard</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-label">Guesses left</div>
+            <div class="stat-value guesses" id="statGuesses">12</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Correct</div>
+            <div class="stat-value correct" id="statCorrect">0 / 9</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Streak</div>
+            <div class="stat-value streak" id="statStreak">0 🔥</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Clues left</div>
+            <div class="stat-value clues" id="statClues">4</div>
+        </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid-outer">
+        <div class="game-grid" id="gameGrid">
+            <div class="corner-cell"></div>
+            <!-- col headers and cells injected by JS -->
+        </div>
+    </div>
+
+    <!-- Message bar -->
+    <div class="message-bar" id="messageBar">
+        Click a category header for its definition. Type a country and press Enter to guess.
+    </div>
+
+</div>
+
+<!-- Definition modal -->
+<div class="modal-overlay hidden" id="defModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('defModal')">✕</button>
+        <div class="modal-title" id="defModalTitle"></div>
+        <div class="modal-body" id="defModalBody"></div>
+    </div>
+</div>
+
+<!-- Game over modal -->
+<div class="modal-overlay hidden" id="gameOverModal">
+    <div class="modal-box" style="text-align:center;">
+        <div class="modal-title" id="goTitle" style="font-size:1.5rem;"></div>
+        <div class="modal-body" id="goSubtitle"></div>
+        <div class="gameover-score">
+            <div class="gameover-stat">
+                <div class="big" id="goCorrect" style="color:var(--green)">0</div>
+                <div class="label">correct</div>
+            </div>
+            <div class="gameover-stat">
+                <div class="big" id="goGuesses" style="color:var(--blue)">0</div>
+                <div class="label">guesses used</div>
+            </div>
+            <div class="gameover-stat">
+                <div class="big" id="goStreak" style="color:var(--purple)">0</div>
+                <div class="label">best streak</div>
+            </div>
+        </div>
+        <div class="gameover-answers">
+            <h4>Answers</h4>
+            <div class="answer-grid" id="goAnswerGrid"></div>
+        </div>
+        <button class="play-again-btn" onclick="location.reload()">Play again</button>
+    </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+
+const allCountries = [
+    {name:"Afghanistan",code:"AF"},{name:"Albania",code:"AL"},{name:"Algeria",code:"DZ"},
+    {name:"Angola",code:"AO"},{name:"Argentina",code:"AR"},{name:"Armenia",code:"AM"},
+    {name:"Australia",code:"AU"},{name:"Austria",code:"AT"},{name:"Azerbaijan",code:"AZ"},
+    {name:"Bangladesh",code:"BD"},{name:"Belarus",code:"BY"},{name:"Belgium",code:"BE"},
+    {name:"Bolivia",code:"BO"},{name:"Bosnia and Herzegovina",code:"BA"},{name:"Botswana",code:"BW"},
+    {name:"Brazil",code:"BR"},{name:"Bulgaria",code:"BG"},{name:"Cabo Verde",code:"CV"},
+    {name:"Cambodia",code:"KH"},{name:"Cameroon",code:"CM"},{name:"Canada",code:"CA"},
+    {name:"Central African Republic",code:"CF"},{name:"Chad",code:"TD"},{name:"Chile",code:"CL"},
+    {name:"China",code:"CN"},{name:"Colombia",code:"CO"},{name:"Costa Rica",code:"CR"},
+    {name:"Croatia",code:"HR"},{name:"Cuba",code:"CU"},{name:"Czechia",code:"CZ"},
+    {name:"Denmark",code:"DK"},{name:"Ecuador",code:"EC"},{name:"Egypt",code:"EG"},
+    {name:"El Salvador",code:"SV"},{name:"Eritrea",code:"ER"},{name:"Estonia",code:"EE"},
+    {name:"Eswatini",code:"SZ"},{name:"Ethiopia",code:"ET"},{name:"Finland",code:"FI"},
+    {name:"France",code:"FR"},{name:"Gabon",code:"GA"},{name:"Georgia",code:"GE"},
+    {name:"Germany",code:"DE"},{name:"Ghana",code:"GH"},{name:"Greece",code:"GR"},
+    {name:"Guatemala",code:"GT"},{name:"Guinea",code:"GN"},{name:"Guinea-Bissau",code:"GW"},
+    {name:"Haiti",code:"HT"},{name:"Honduras",code:"HN"},{name:"Hungary",code:"HU"},
+    {name:"Iceland",code:"IS"},{name:"India",code:"IN"},{name:"Indonesia",code:"ID"},
+    {name:"Iran",code:"IR"},{name:"Iraq",code:"IQ"},{name:"Ireland",code:"IE"},
+    {name:"Italy",code:"IT"},{name:"Jamaica",code:"JM"},{name:"Japan",code:"JP"},
+    {name:"Jordan",code:"JO"},{name:"Kazakhstan",code:"KZ"},{name:"Kenya",code:"KE"},
+    {name:"Kuwait",code:"KW"},{name:"Kyrgyzstan",code:"KG"},{name:"Laos",code:"LA"},
+    {name:"Latvia",code:"LV"},{name:"Lebanon",code:"LB"},{name:"Lesotho",code:"LS"},
+    {name:"Liberia",code:"LR"},{name:"Libya",code:"LY"},{name:"Lithuania",code:"LT"},
+    {name:"Luxembourg",code:"LU"},{name:"Madagascar",code:"MG"},{name:"Malawi",code:"MW"},
+    {name:"Malaysia",code:"MY"},{name:"Mali",code:"ML"},{name:"Malta",code:"MT"},
+    {name:"Mauritania",code:"MR"},{name:"Mauritius",code:"MU"},{name:"Mexico",code:"MX"},
+    {name:"Moldova",code:"MD"},{name:"Mongolia",code:"MN"},{name:"Montenegro",code:"ME"},
+    {name:"Morocco",code:"MA"},{name:"Mozambique",code:"MZ"},{name:"Myanmar",code:"MM"},
+    {name:"Namibia",code:"NA"},{name:"Nepal",code:"NP"},{name:"Netherlands",code:"NL"},
+    {name:"Nicaragua",code:"NI"},{name:"Niger",code:"NE"},{name:"Nigeria",code:"NG"},
+    {name:"North Korea",code:"KP"},{name:"North Macedonia",code:"MK"},{name:"Norway",code:"NO"},
+    {name:"Oman",code:"OM"},{name:"Pakistan",code:"PK"},{name:"Palestine",code:"PS"},
+    {name:"Panama",code:"PA"},{name:"Paraguay",code:"PY"},{name:"Peru",code:"PE"},
+    {name:"Philippines",code:"PH"},{name:"Poland",code:"PL"},{name:"Portugal",code:"PT"},
+    {name:"Qatar",code:"QA"},{name:"Romania",code:"RO"},{name:"Russia",code:"RU"},
+    {name:"Rwanda",code:"RW"},{name:"Saudi Arabia",code:"SA"},{name:"Senegal",code:"SN"},
+    {name:"Serbia",code:"RS"},{name:"Sierra Leone",code:"SL"},{name:"Singapore",code:"SG"},
+    {name:"Slovakia",code:"SK"},{name:"Slovenia",code:"SI"},{name:"Somalia",code:"SO"},
+    {name:"South Africa",code:"ZA"},{name:"South Korea",code:"KR"},{name:"Spain",code:"ES"},
+    {name:"Sri Lanka",code:"LK"},{name:"Sudan",code:"SD"},{name:"Sweden",code:"SE"},
+    {name:"Switzerland",code:"CH"},{name:"Syria",code:"SY"},{name:"Taiwan",code:"TW"},
+    {name:"Tajikistan",code:"TJ"},{name:"Tanzania",code:"TZ"},{name:"Thailand",code:"TH"},
+    {name:"Togo",code:"TG"},{name:"Tunisia",code:"TN"},{name:"Turkey",code:"TR"},
+    {name:"Turkmenistan",code:"TM"},{name:"Uganda",code:"UG"},{name:"Ukraine",code:"UA"},
+    {name:"United Arab Emirates",code:"AE"},{name:"United Kingdom",code:"GB"},
+    {name:"United States",code:"US"},{name:"Uruguay",code:"UY"},{name:"Uzbekistan",code:"UZ"},
+    {name:"Venezuela",code:"VE"},{name:"Vietnam",code:"VN"},{name:"Yemen",code:"YE"},
+    {name:"Zambia",code:"ZM"},{name:"Zimbabwe",code:"ZW"},
+    {name:"Andorra",code:"AD"},{name:"Bahrain",code:"BH"},{name:"Denmark",code:"DK"},
+    {name:"Israel",code:"IL"},{name:"New Zealand",code:"NZ"},{name:"Serbia",code:"RS"},
+].filter((c,i,arr)=>arr.findIndex(x=>x.name===c.name)===i)
+ .sort((a,b)=>a.name.localeCompare(b.name));
+
+// Economic data with carefully verified properties
+const economicData = [
+    {name:"United States",code:"US",p:{developed:true,high_pop:true,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:false,high_internet:true,rnd_high:true,high_pub_debt:true,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"China",code:"CN",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:true,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"India",code:"IN",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:true}},
+    {name:"Germany",code:"DE",p:{developed:true,high_pop:true,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Brazil",code:"BR",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Nigeria",code:"NG",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Switzerland",code:"CH",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Singapore",code:"SG",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Finland",code:"FI",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Norway",code:"NO",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Japan",code:"JP",p:{developed:true,high_pop:true,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:true,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Australia",code:"AU",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:false,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Canada",code:"CA",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"United Kingdom",code:"GB",p:{developed:true,high_pop:true,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:true,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"France",code:"FR",p:{developed:true,high_pop:true,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:true,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Italy",code:"IT",p:{developed:true,high_pop:true,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:true,low_inflation:true,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Spain",code:"ES",p:{developed:true,high_pop:true,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:true,low_inflation:true,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Sweden",code:"SE",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Netherlands",code:"NL",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Belgium",code:"BE",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Austria",code:"AT",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:true,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Luxembourg",code:"LU",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Ireland",code:"IE",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:false,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Denmark",code:"DK",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"New Zealand",code:"NZ",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Portugal",code:"PT",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:true,low_inflation:true,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Greece",code:"GR",p:{developed:true,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:true,low_inflation:true,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Czechia",code:"CZ",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:true,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Slovakia",code:"SK",p:{developed:true,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:true,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Estonia",code:"EE",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Poland",code:"PL",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:true,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Hungary",code:"HU",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Romania",code:"RO",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Bulgaria",code:"BG",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Croatia",code:"HR",p:{developed:true,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Serbia",code:"RS",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Ukraine",code:"UA",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:false,rnd_high:false,high_pub_debt:true,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Russia",code:"RU",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Turkey",code:"TR",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:true,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Saudi Arabia",code:"SA",p:{developed:false,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"United Arab Emirates",code:"AE",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:true,fin_center:true,aging_pop:false,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Qatar",code:"QA",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:false,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Kuwait",code:"KW",p:{developed:false,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Mexico",code:"MX",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Argentina",code:"AR",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:true,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Chile",code:"CL",p:{developed:false,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:false,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Colombia",code:"CO",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Peru",code:"PE",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Venezuela",code:"VE",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Bolivia",code:"BO",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Paraguay",code:"PY",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Ecuador",code:"EC",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Kazakhstan",code:"KZ",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:true,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"South Africa",code:"ZA",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Ethiopia",code:"ET",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Kenya",code:"KE",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Egypt",code:"EG",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:true,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Morocco",code:"MA",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Algeria",code:"DZ",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Tunisia",code:"TN",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Ghana",code:"GH",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Angola",code:"AO",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:true,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Tanzania",code:"TZ",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Rwanda",code:"RW",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Bangladesh",code:"BD",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Pakistan",code:"PK",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:true,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Vietnam",code:"VN",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:true,service_dom:false,high_tech_exp:true,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Indonesia",code:"ID",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Thailand",code:"TH",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Malaysia",code:"MY",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Philippines",code:"PH",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"South Korea",code:"KR",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Taiwan",code:"TW",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Chad",code:"TD",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Mali",code:"ML",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Niger",code:"NE",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Zambia",code:"ZM",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Zimbabwe",code:"ZW",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Nepal",code:"NP",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Afghanistan",code:"AF",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Jordan",code:"JO",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:true,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Lebanon",code:"LB",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:true,low_inflation:false,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Israel",code:"IL",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:true,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:false,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Iceland",code:"IS",p:{developed:true,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:true,fin_center:false,aging_pop:false,high_internet:true,rnd_high:true,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Uruguay",code:"UY",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:true,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Costa Rica",code:"CR",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Panama",code:"PA",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:false,fin_center:true,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:true}},
+    {name:"Georgia",code:"GE",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:true}},
+    {name:"Armenia",code:"AM",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Moldova",code:"MD",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Myanmar",code:"MM",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Cambodia",code:"KH",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Sri Lanka",code:"LK",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:true,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:true,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:true,fdi_high:false}},
+    {name:"Oman",code:"OM",p:{developed:false,high_pop:false,high_gdppc:true,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:true,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:true,high_tech_exp:false,stable_cur:true,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"North Macedonia",code:"MK",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Albania",code:"AL",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Bosnia and Herzegovina",code:"BA",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:false,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:true,remittance_high:true,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Montenegro",code:"ME",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:true,high_internet:true,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:true,high_urbanization:true,high_life_exp:true,fdi_high:false}},
+    {name:"Kyrgyzstan",code:"KG",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Tajikistan",code:"TJ",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Uzbekistan",code:"UZ",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Mozambique",code:"MZ",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Senegal",code:"SN",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:true,high_urbanization:false,high_life_exp:false,fdi_high:false}},
+    {name:"Cameroon",code:"CM",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:true,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Libya",code:"LY",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Iran",code:"IR",p:{developed:false,high_pop:true,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:true,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Iraq",code:"IQ",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:true,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Mauritius",code:"MU",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:false,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:false,service_dom:true,high_tech_exp:false,stable_cur:false,low_corrupt:true,fin_center:true,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:true,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:true,fdi_high:true}},
+    {name:"Botswana",code:"BW",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:true,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:true,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Namibia",code:"NA",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:false,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:false,trade_surplus:false,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:true,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+    {name:"Gabon",code:"GA",p:{developed:false,high_pop:false,high_gdppc:false,tourist_top20:false,landlocked:false,oil_exporter:true,agri_15pct:false,gini_high:true,low_unemp:false,mfg_high:false,ext_debt_high:true,trade_surplus:true,service_dom:false,high_tech_exp:false,stable_cur:false,low_corrupt:false,fin_center:false,aging_pop:false,high_internet:false,rnd_high:false,high_pub_debt:false,low_inflation:false,high_unemp:false,remittance_high:false,high_urbanization:true,high_life_exp:false,fdi_high:false}},
+];
+
+// ─────────────────────────────────────────────
+// CATEGORIES with difficulty tags
+// ─────────────────────────────────────────────
+
+// difficulty: 'easy' = many countries qualify, 'hard' = few qualify, 'medium' = in between
+const categories = [
+    {id:"developed",      name:"Developed economy",                    diff:"medium", type:"development",    prop:"developed",       def:"Countries classified as developed by standard indices (HDI > 0.85, GDP/capita > $40k PPP)."},
+    {id:"developing",     name:"Developing economy",                   diff:"easy",   type:"development",    check:c=>!c.p.developed, def:"Countries with HDI below 0.7 or GDP/capita below $15k PPP."},
+    {id:"high_pop",       name:"Population over 100 million",          diff:"medium", type:"population",     prop:"high_pop",         def:"Countries with an estimated population exceeding 100 million people."},
+    {id:"tourist_top20",  name:"Top 20 tourist destination",           diff:"medium", type:"tourism",        prop:"tourist_top20",    def:"Countries ranked in the top 20 globally for international tourist arrivals (UNWTO data)."},
+    {id:"landlocked",     name:"Landlocked country",                   diff:"medium", type:"geography",      prop:"landlocked",       def:"Countries with no coastline — completely surrounded by other countries."},
+    {id:"oil_exporter",   name:"Net oil exporter",                     diff:"hard",   type:"resources",      prop:"oil_exporter",     def:"Countries that export significantly more crude oil than they import."},
+    {id:"agri_15pct",     name:"Agriculture > 15% of GDP",             diff:"medium", type:"sector",         prop:"agri_15pct",       def:"Countries where the agricultural sector contributes over 15% to GDP."},
+    {id:"gini_high",      name:"High income inequality (Gini > 0.40)", diff:"medium", type:"social",         prop:"gini_high",        def:"Countries with a Gini coefficient above 0.40, indicating significant income inequality."},
+    {id:"low_unemp",      name:"Unemployment below 5%",                diff:"medium", type:"labour",         prop:"low_unemp",        def:"Countries with unemployment rates consistently under 5%."},
+    {id:"mfg_high",       name:"Strong manufacturing sector",          diff:"easy",   type:"sector",         prop:"mfg_high",         def:"Countries where manufacturing contributes significantly to GDP and employment."},
+    {id:"ext_debt_high",  name:"High external debt burden",            diff:"easy",   type:"finance",        prop:"ext_debt_high",    def:"Countries with external debt that represents a major financial burden relative to GDP or export earnings."},
+    {id:"trade_surplus",  name:"Runs a trade surplus",                 diff:"medium", type:"trade",          prop:"trade_surplus",    def:"Countries that consistently export more goods and services than they import."},
+    {id:"service_dom",    name:"Services dominate economy (> 60% GDP)",diff:"medium", type:"sector",         prop:"service_dom",      def:"Countries where the service sector accounts for over 60% of GDP."},
+    {id:"high_tech_exp",  name:"Significant high-tech exports",        diff:"hard",   type:"trade",          prop:"high_tech_exp",    def:"Countries whose export mix includes a high share of technology products."},
+    {id:"stable_cur",     name:"Stable, low-volatility currency",      diff:"medium", type:"monetary",       prop:"stable_cur",       def:"Countries known for currencies with low exchange-rate volatility."},
+    {id:"low_corrupt",    name:"Low corruption (CPI > 70)",            diff:"hard",   type:"governance",     prop:"low_corrupt",      def:"Countries with a Transparency International CPI score above 70."},
+    {id:"fin_center",     name:"Major financial centre",               diff:"hard",   type:"finance",        prop:"fin_center",       def:"Countries hosting globally or regionally significant financial centres."},
+    {id:"aging_pop",      name:"Aging population (median age > 40)",   diff:"hard",   type:"demographics",   prop:"aging_pop",        def:"Countries where the median age exceeds 40 years."},
+    {id:"high_internet",  name:"Internet penetration above 80%",       diff:"medium", type:"technology",     prop:"high_internet",    def:"Countries where more than 80% of the population uses the internet."},
+    {id:"rnd_high",       name:"R&D spending above 2% of GDP",         diff:"hard",   type:"innovation",     prop:"rnd_high",         def:"Countries investing over 2% of GDP in research and development."},
+    {id:"high_pub_debt",  name:"Public debt exceeds 100% of GDP",      diff:"hard",   type:"fiscal",         prop:"high_pub_debt",    def:"Countries where government debt-to-GDP ratio consistently exceeds 100%."},
+    {id:"low_inflation",  name:"Low inflation (below 3%)",             diff:"medium", type:"monetary",       prop:"low_inflation",    def:"Countries with annual inflation consistently under 3%."},
+    {id:"high_unemp",     name:"High unemployment (above 10%)",        diff:"medium", type:"labour",         prop:"high_unemp",       def:"Countries with unemployment rates consistently above 10%."},
+    {id:"remittance_high",name:"High remittance inflows",              diff:"medium", type:"finance",        prop:"remittance_high",  def:"Countries receiving large remittance flows from citizens working abroad."},
+    {id:"high_urbanization",name:"Urbanisation above 75%",            diff:"easy",   type:"demographics",   prop:"high_urbanization",def:"Countries where over 75% of the population lives in urban areas."},
+    {id:"high_life_exp",  name:"Life expectancy above 80 years",       diff:"medium", type:"demographics",   prop:"high_life_exp",    def:"Countries with average life expectancy at birth consistently above 80 years."},
+    {id:"fdi_high",       name:"High FDI inflows",                     diff:"medium", type:"investment",     prop:"fdi_high",         def:"Countries that attract significant foreign direct investment relative to GDP."},
+];
+
+// ─────────────────────────────────────────────
+// CLUE GENERATION — property-aware, category-linked
+// ─────────────────────────────────────────────
+
+function generateClue(country, rowCat, colCat) {
+    const p = country.p;
+    const hints = [];
+
+    // Build meaningful hints based on actual country properties, referencing
+    // category-adjacent facts so clues are genuinely helpful
+    if (p.landlocked)      hints.push("This country has no coastline.");
+    if (p.oil_exporter)    hints.push("This country is a significant crude oil exporter.");
+    if (p.agri_15pct)      hints.push("Agriculture makes up a large share of this country's economy.");
+    if (p.tourist_top20)   hints.push("This is one of the world's top 20 tourist destinations.");
+    if (p.trade_surplus)   hints.push("This country consistently exports more than it imports.");
+    if (p.high_tech_exp)   hints.push("High-technology products make up a notable share of its exports.");
+    if (p.stable_cur)      hints.push("Its currency is considered stable and low-volatility.");
+    if (p.low_corrupt)     hints.push("It scores above 70 on the Corruption Perceptions Index.");
+    if (p.fin_center)      hints.push("It hosts a major international financial centre.");
+    if (p.aging_pop)       hints.push("Its median population age is above 40 years.");
+    if (p.rnd_high)        hints.push("It invests over 2% of GDP in research and development.");
+    if (p.high_pub_debt)   hints.push("Government debt exceeds 100% of this country's GDP.");
+    if (p.high_unemp)      hints.push("This country has an unemployment rate above 10%.");
+    if (p.remittance_high) hints.push("It receives substantial remittances from citizens living abroad.");
+    if (p.high_pop)        hints.push("This country has over 100 million people.");
+    if (!p.developed && !p.agri_15pct && !p.landlocked) hints.push("It is an emerging market with an urban-oriented economy.");
+    if (p.gini_high)       hints.push("Income inequality here is high (Gini above 0.40).");
+    if (p.service_dom)     hints.push("The service sector accounts for over 60% of its GDP.");
+    if (p.low_unemp)       hints.push("Unemployment is below 5% in this country.");
+    if (p.developed && p.high_internet) hints.push("It has high internet penetration (over 80%).");
+    if (p.mfg_high)        hints.push("Manufacturing is a significant driver of its economy.");
+
+    // Continental/regional hint as fallback
+    const regionHints = {
+        "AF":"It is located in Central Asia.",
+        "DZ":"It is a North African nation.",
+        "AR":"It is in South America.",
+        "AU":"It is in the Asia-Pacific region.",
+        "AT":"It is a Central European nation.",
+        "BD":"It is in South Asia.",
+        "BE":"It is in Western Europe.",
+        "BR":"It is in South America.",
+        "CA":"It is in North America.",
+        "CN":"It is in East Asia.",
+        "DE":"It is in Western Europe.",
+        "EG":"It bridges North Africa and the Middle East.",
+        "ET":"It is in the Horn of Africa.",
+        "FR":"It is in Western Europe.",
+        "GB":"It is in Northern Europe.",
+        "GH":"It is in West Africa.",
+        "IN":"It is in South Asia.",
+        "ID":"It is an archipelago in Southeast Asia.",
+        "IR":"It is in the Middle East.",
+        "IT":"It is in Southern Europe.",
+        "JP":"It is an island nation in East Asia.",
+        "KE":"It is in East Africa.",
+        "KR":"It is in East Asia.",
+        "MX":"It is in North America.",
+        "NG":"It is in West Africa.",
+        "NO":"It is in Northern Europe.",
+        "PK":"It is in South Asia.",
+        "PL":"It is in Central Europe.",
+        "RU":"It spans Eastern Europe and Northern Asia.",
+        "SA":"It is on the Arabian Peninsula.",
+        "SG":"It is a city-state in Southeast Asia.",
+        "ZA":"It is in Southern Africa.",
+        "TH":"It is in Southeast Asia.",
+        "TR":"It bridges Europe and Asia.",
+        "TW":"It is an island in East Asia.",
+        "UA":"It is in Eastern Europe.",
+        "US":"It is in North America.",
+        "VN":"It is in Southeast Asia.",
+    };
+
+    if (hints.length === 0 && regionHints[country.code]) {
+        hints.push(regionHints[country.code]);
+    }
+
+    // Pick a random hint that's not directly naming the answer category (avoid being too on-the-nose)
+    const rowProp = rowCat.prop || rowCat.id;
+    const colProp = colCat.prop || colCat.id;
+    const filtered = hints.filter(h => {
+        const lower = h.toLowerCase();
+        return !(lower.includes(rowCat.name.toLowerCase().slice(0,10)) ||
+                 lower.includes(colCat.name.toLowerCase().slice(0,10)));
+    });
+
+    const pool = filtered.length > 0 ? filtered : hints;
+    if (pool.length === 0) return `Think about which country fits both "${rowCat.name}" and "${colCat.name}".`;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ─────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────
+
+let difficulty   = 'easy';
+let guessesLeft  = 12;
+let correctCount = 0;
+let streak       = 0;
+let bestStreak   = 0;
+let cluesLeft    = 4;
+let gameActive   = true;
+let guessedCells = Array(3).fill(0).map(()=>Array(3).fill(false));
+let sampleAnswers = Array(3).fill(0).map(()=>Array(3).fill(null));
+let usedCountries = new Set();
+let gridRows = [], gridCols = [];
+
+// Difficulty thresholds: min countries that must match each intersection
+const DIFF_MIN = { easy: 12, medium: 5, hard: 2 };
+const DIFF_MAX = { easy: 999, medium: 999, hard: 999 };
+
+function setDifficulty(d) {
+    difficulty = d;
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.diff === d) btn.classList.add('active');
+    });
+    // Restart game with new difficulty
+    restartGame();
+}
+
+function getMatchCount(rowCat, colCat) {
+    return economicData.filter(c => matchesCat(c, rowCat) && matchesCat(c, colCat)).length;
+}
+
+function matchesCat(country, cat) {
+    if (!country || !cat) return false;
+    if (cat.check) return cat.check(country);
+    return country.p[cat.prop] === true;
+}
+
+function shuffle(arr) {
+    for (let i = arr.length-1; i>0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+}
+
+// ─────────────────────────────────────────────
+// GRID GENERATION with difficulty-aware category picking
+// ─────────────────────────────────────────────
+
+function generateGrid() {
+    const minMatch = DIFF_MIN[difficulty];
+
+    // Filter categories to appropriate difficulty pool
+    // Easy: all categories; Medium: medium+hard; Hard: hard only but relax if not enough
+    let pool;
+    if (difficulty === 'easy')   pool = categories.filter(c => c.diff !== 'hard');
+    else if (difficulty === 'medium') pool = categories.slice(); // all
+    else                         pool = categories.filter(c => c.diff === 'hard' || c.diff === 'medium');
+
+    const contradictions = [
+        ['developed','developing'],
+        ['low_unemp','high_unemp'],
+        ['low_inflation','inflation_high'],
+        ['gini_high','high_income_equality'],
+    ];
+
+    let attempts = 0;
+    while (attempts++ < 800) {
+        shuffle(pool);
+
+        const picked = [];
+        const usedTypes = new Set();
+        const usedIds = new Set();
+
+        for (const cat of pool) {
+            if (picked.length === 6) break;
+            if (usedIds.has(cat.id)) continue;
+            if (usedTypes.has(cat.type)) continue;
+
+            // No contradictions
+            let contradicts = false;
+            for (const [a,b] of contradictions) {
+                if ((cat.id === a && usedIds.has(b)) || (cat.id === b && usedIds.has(a))) {
+                    contradicts = true; break;
+                }
+            }
+            if (contradicts) continue;
+
+            picked.push(cat);
+            usedTypes.add(cat.type);
+            usedIds.add(cat.id);
+        }
+
+        if (picked.length < 6) continue;
+
+        const rows = picked.slice(0,3), cols = picked.slice(3,6);
+
+        // Verify every intersection has enough matching countries
+        let valid = true;
+        const tempAnswers = [];
+        for (let r=0; r<3; r++) {
+            tempAnswers.push([]);
+            for (let c=0; c<3; c++) {
+                const matches = economicData.filter(x => matchesCat(x,rows[r]) && matchesCat(x,cols[c]));
+                if (matches.length < minMatch) { valid=false; break; }
+                tempAnswers[r].push(matches[Math.floor(Math.random()*matches.length)]);
+            }
+            if (!valid) break;
+        }
+
+        if (valid) {
+            gridRows = rows; gridCols = cols; sampleAnswers = tempAnswers;
+            return true;
+        }
+    }
+
+    // Fallback: relax to minMatch=1
+    return generateGridRelaxed();
+}
+
+function generateGridRelaxed() {
+    let attempts = 0;
+    while (attempts++ < 500) {
+        shuffle(categories);
+        const picked = [];
+        const usedTypes = new Set();
+        const usedIds = new Set();
+        for (const cat of categories) {
+            if (picked.length === 6) break;
+            if (usedIds.has(cat.id) || usedTypes.has(cat.type)) continue;
+            picked.push(cat);
+            usedTypes.add(cat.type);
+            usedIds.add(cat.id);
+        }
+        if (picked.length < 6) continue;
+        const rows = picked.slice(0,3), cols = picked.slice(3,6);
+        let valid = true;
+        const tempAnswers = [];
+        for (let r=0; r<3; r++) {
+            tempAnswers.push([]);
+            for (let c=0; c<3; c++) {
+                const matches = economicData.filter(x => matchesCat(x,rows[r]) && matchesCat(x,cols[c]));
+                if (matches.length < 1) { valid=false; break; }
+                tempAnswers[r].push(matches[0]);
+            }
+            if (!valid) break;
+        }
+        if (valid) { gridRows=rows; gridCols=cols; sampleAnswers=tempAnswers; return true; }
+    }
+    return false;
+}
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+
+function diffDot(cat) {
+    return `<span class="diff-dot ${cat.diff}" title="${cat.diff} difficulty"></span>`;
+}
+
+function renderGrid() {
+    const grid = document.getElementById('gameGrid');
+    // Clear all but corner
+    while (grid.children.length > 1) grid.removeChild(grid.lastChild);
+
+    // Col headers
+    gridCols.forEach((cat,ci) => {
+        const matchCount = economicData.filter(c=>matchesCat(c,cat)).length;
+        const h = document.createElement('div');
+        h.className = 'col-header';
+        h.innerHTML = `${diffDot(cat)}<span class="header-name">${cat.name}</span>`;
+        h.title = cat.def;
+        h.onclick = () => openDefModal(cat.name, cat.def);
+        grid.appendChild(h);
+    });
+
+    // Rows
+    for (let r=0; r<3; r++) {
+        const rowCat = gridRows[r];
+        // Row header
+        const rh = document.createElement('div');
+        rh.className = 'row-header';
+        rh.innerHTML = `${diffDot(rowCat)}<span class="header-name">${rowCat.name}</span>`;
+        rh.title = rowCat.def;
+        rh.onclick = () => openDefModal(rowCat.name, rowCat.def);
+        grid.appendChild(rh);
+
+        for (let c=0; c<3; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.dataset.r = r;
+            cell.dataset.c = c;
+
+            // Autocomplete input
+            const wrap = document.createElement('div');
+            wrap.className = 'autocomplete-wrap';
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.className = 'country-input';
+            inp.placeholder = 'Country…';
+            inp.autocomplete = 'off';
+            const sugg = document.createElement('div');
+            sugg.className = 'autocomplete-list hidden';
+
+            inp.addEventListener('input', () => doAutoSuggest(inp, sugg));
+            inp.addEventListener('focus', () => doAutoSuggest(inp, sugg));
+            inp.addEventListener('blur', () => setTimeout(()=>sugg.classList.add('hidden'),120));
+            inp.addEventListener('keydown', e => {
+                if (e.key==='Enter') { sugg.classList.add('hidden'); submitGuess(r,c,inp,cell); }
+            });
+
+            wrap.appendChild(inp);
+            wrap.appendChild(sugg);
+
+            // Result display (hidden initially)
+            const result = document.createElement('div');
+            result.className = 'cell-result hidden';
+
+            // Clue button
+            const clueBtn = document.createElement('button');
+            clueBtn.className = 'clue-btn';
+            clueBtn.textContent = '💡 Clue';
+            clueBtn.onclick = (e) => { e.stopPropagation(); revealClue(r, c, clueBtn); };
+
+            cell.appendChild(wrap);
+            cell.appendChild(result);
+            cell.appendChild(clueBtn);
+            grid.appendChild(cell);
+        }
+    }
+}
+
+function doAutoSuggest(inp, sugg) {
+    const val = inp.value.toLowerCase().trim();
+    sugg.innerHTML = '';
+    if (!val) { sugg.classList.add('hidden'); return; }
+    const matches = allCountries.filter(c=>c.name.toLowerCase().startsWith(val)).slice(0,8);
+    if (!matches.length) { sugg.classList.add('hidden'); return; }
+    matches.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.textContent = c.name;
+        item.addEventListener('mousedown', e => {
+            e.preventDefault();
+            inp.value = c.name;
+            sugg.classList.add('hidden');
+        });
+        sugg.appendChild(item);
+    });
+    sugg.classList.remove('hidden');
+}
+
+// ─────────────────────────────────────────────
+// GUESS LOGIC
+// ─────────────────────────────────────────────
+
+function submitGuess(r, c, inp, cell) {
+    if (!gameActive || guessedCells[r][c]) return;
+
+    const name = inp.value.trim();
+    if (!name) return;
+
+    // Validate country exists
+    const countryObj = economicData.find(x=>x.name.toLowerCase()===name.toLowerCase())
+                    || allCountries.find(x=>x.name.toLowerCase()===name.toLowerCase());
+    if (!countryObj) {
+        showMessage(`"${name}" isn't in our country list. Check spelling!`, 'error');
+        return;
+    }
+
+    // Check not already used
+    if (usedCountries.has(name.toLowerCase())) {
+        showMessage(`${name} was already correctly placed elsewhere!`, 'error');
+        return;
+    }
+
+    guessesLeft--;
+    updateStats();
+
+    // Find in economicData (may not be there if very obscure)
+    const econCountry = economicData.find(x=>x.name.toLowerCase()===name.toLowerCase());
+
+    let correct = false;
+    if (econCountry) {
+        correct = matchesCat(econCountry, gridRows[r]) && matchesCat(econCountry, gridCols[c]);
+    }
+
+    if (correct) {
+        // Mark correct
+        guessedCells[r][c] = true;
+        usedCountries.add(name.toLowerCase());
+        correctCount++;
+        streak++;
+        if (streak > bestStreak) bestStreak = streak;
+
+        // Update cell UI
+        cell.classList.add('correct-cell');
+        const wrap = cell.querySelector('.autocomplete-wrap');
+        const result = cell.querySelector('.cell-result');
+        wrap.style.display = 'none';
+
+        const flagCode = econCountry.code;
+        result.innerHTML = `
+            <img class="flag-img" src="https://flagsapi.com/${flagCode}/flat/64.png" alt="${name}" onerror="this.style.display='none'">
+            <div class="correct-country-name">${econCountry.name}</div>
+        `;
+        result.classList.remove('hidden');
+
+        // Disable clue button
+        const clueBtn = cell.querySelector('.clue-btn');
+        if (clueBtn) clueBtn.disabled = true;
+
+        inp.disabled = true;
+        showMessage(`✓ Correct! ${name} fits both categories.`, 'success');
+        updateStats();
+
+        if (correctCount === 9) { setTimeout(endGame, 700); }
+    } else {
+        streak = 0;
+        cell.classList.add('wrong-flash');
+        setTimeout(()=>cell.classList.remove('wrong-flash'), 450);
+        inp.value = '';
+        showMessage(`✗ ${name} doesn't fit both categories. ${guessesLeft} guess${guessesLeft!==1?'es':''} left.`, 'error');
+    }
+
+    updateStats();
+    if (guessesLeft <= 0 && correctCount < 9) setTimeout(endGame, 400);
+}
+
+// ─────────────────────────────────────────────
+// CLUE SYSTEM
+// ─────────────────────────────────────────────
+
+function revealClue(r, c, btn) {
+    if (cluesLeft <= 0 || guessedCells[r][c]) return;
+    cluesLeft--;
+    btn.disabled = true;
+    updateStats();
+
+    const answer = sampleAnswers[r][c];
+    const clue = generateClue(answer, gridRows[r], gridCols[c]);
+    showMessage(`💡 Clue: ${clue}`, 'clue');
+    updateClueButtons();
+}
+
+function updateClueButtons() {
+    document.querySelectorAll('.clue-btn').forEach(btn => {
+        const r = parseInt(btn.closest('.grid-cell').dataset.r);
+        const c = parseInt(btn.closest('.grid-cell').dataset.c);
+        if (cluesLeft <= 0 || guessedCells[r][c]) btn.disabled = true;
+        else btn.disabled = false;
+    });
+}
+
+// ─────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────
+
+function showMessage(text, type='') {
+    const bar = document.getElementById('messageBar');
+    bar.textContent = text;
+    bar.className = 'message-bar ' + type;
+}
+
+function updateStats() {
+    document.getElementById('statGuesses').textContent = guessesLeft;
+    document.getElementById('statCorrect').textContent = correctCount + ' / 9';
+    document.getElementById('statStreak').textContent  = streak + (streak >= 3 ? ' 🔥' : '');
+    document.getElementById('statClues').textContent   = cluesLeft;
+    document.getElementById('progressBar').style.width = (correctCount/9*100) + '%';
+}
+
+function openDefModal(title, body) {
+    document.getElementById('defModalTitle').textContent = title;
+    document.getElementById('defModalBody').textContent  = body;
+    document.getElementById('defModal').classList.remove('hidden');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+// ─────────────────────────────────────────────
+// END GAME
+// ─────────────────────────────────────────────
+
+function endGame() {
+    gameActive = false;
+    document.querySelectorAll('.clue-btn, .country-input').forEach(el => el.disabled = true);
+
+    const won = correctCount === 9;
+    document.getElementById('goTitle').textContent = won ? '🎉 Well done!' : '⏱ Game over';
+    document.getElementById('goSubtitle').textContent = won
+        ? `You completed the grid with ${12-guessesLeft} guess${12-guessesLeft!==1?'es':''}!`
+        : `You got ${correctCount} of 9. Here are the sample answers:`;
+    document.getElementById('goCorrect').textContent = correctCount;
+    document.getElementById('goGuesses').textContent = 12 - guessesLeft;
+    document.getElementById('goStreak').textContent  = bestStreak;
+
+    // Render answer grid
+    const ag = document.getElementById('goAnswerGrid');
+    ag.innerHTML = '';
+    for (let r=0; r<3; r++) {
+        for (let c=0; c<3; c++) {
+            const el = document.createElement('div');
+            el.className = 'answer-cell' + (guessedCells[r][c] ? ' solved' : '');
+            el.textContent = guessedCells[r][c] ? '✓ ' + sampleAnswers[r][c].name : sampleAnswers[r][c].name;
+            ag.appendChild(el);
+        }
+    }
+
+    document.getElementById('gameOverModal').classList.remove('hidden');
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+
+function restartGame() {
+    guessesLeft = 12; correctCount = 0; streak = 0; bestStreak = 0;
+    cluesLeft = 4; gameActive = true;
+    guessedCells = Array(3).fill(0).map(()=>Array(3).fill(false));
+    usedCountries.clear();
+    document.getElementById('gameOverModal').classList.add('hidden');
+    generateGrid();
+    renderGrid();
+    updateStats();
+    showMessage('Click a category header for its definition. Type a country and press Enter to guess.', '');
+}
+
+document.addEventListener('DOMContentLoaded', restartGame);
+document.addEventListener('keydown', e => {
+    if (e.key==='Escape') {
+        closeModal('defModal');
+        closeModal('gameOverModal');
+    }
+});
+document.getElementById('defModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('defModal')) closeModal('defModal');
+});
+document.getElementById('gameOverModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('gameOverModal')) closeModal('gameOverModal');
+});
+</script>
+</body>
+</html>
