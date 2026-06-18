@@ -657,14 +657,13 @@
 <body>
 <div class="app">
 
- <!-- Header -->
+    <!-- Header -->
     <div class="header">
-        <div class="tagline">Guess the country for each economic intersection</div>
         <div class="logo-row">
             <div class="logo-icon">EG</div>
             <div class="logo-text">Econo<span>Grid</span></div>
         </div>
-        <div class="tagline">by</div>
+        <div class="tagline">Guess the country for each economic intersection</div>
         <a class="brand-link" href="https://hastingsbizecon.wordpress.com/" target="_blank" rel="noopener noreferrer">
             <img src="https://hastingsbizecon.github.io/econogrid/hbe%2025%20banner.png" alt="Hastings Biz Econ">
         </a>
@@ -974,95 +973,175 @@ const categories = [
 ];
 
 // ─────────────────────────────────────────────
-// CLUE GENERATION — property-aware, category-linked
+// CLUE LOOKUP — vivid, well-known facts per country
+// Each entry has multiple clues; one is picked at random.
+// Clues use capitals, leaders, famous people, landmarks, festivals.
 // ─────────────────────────────────────────────
 
-function generateClue(country, rowCat, colCat) {
-    const p = country.p;
-    const hints = [];
+const countryClues = {
+    "Afghanistan": ["Its capital is Kabul.", "The Buddhas of Bamiyan were ancient statues located here.", "Buzkashi, a sport played on horseback with a goat carcass, is the national sport."],
+    "Albania":     ["Its capital is Tirana.", "Mother Teresa was born in Shkodër to Albanian parents.", "The Apollonia archaeological site is one of the best-preserved ancient cities in the region."],
+    "Algeria":     ["Its capital is Algiers.", "It is the largest country by area in Africa.", "The Sahara Desert covers more than 80% of its territory."],
+    "Angola":      ["Its capital is Luanda.", "Victoria Falls borders this country to the south.", "Luanda is one of the most expensive cities in the world for expatriates."],
+    "Argentina":   ["Its capital is Buenos Aires.", "Pope Francis was born in Buenos Aires.", "The tango dance and Carnival are celebrated here."],
+    "Armenia":     ["Its capital is Yerevan.", "It was the first country in the world to adopt Christianity as a state religion, in 301 AD.", "Mount Ararat is the national symbol, though it lies across the border in Turkey."],
+    "Australia":   ["Its capital is Canberra.", "Sydney hosts one of the world's most famous New Year's Eve fireworks displays over the Opera House.", "Steve Irwin, the famous 'Crocodile Hunter', was from here."],
+    "Austria":     ["Its capital is Vienna.", "Mozart was born in Salzburg.", "The Vienna Opera Ball is one of the world's most prestigious formal events."],
+    "Azerbaijan":  ["Its capital is Baku.", "President Ilham Aliyev has led the country since 2003.", "It hosted the Formula 1 Azerbaijan Grand Prix on a street circuit in central Baku."],
+    "Bangladesh":  ["Its capital is Dhaka.", "The Pohela Boishakh New Year festival is celebrated with huge street parades.", "It is home to the Sundarbans, the world's largest mangrove forest."],
+    "Belarus":     ["Its capital is Minsk.", "President Alexander Lukashenko has held power since 1994.", "It borders Russia to the north and east."],
+    "Belgium":     ["Its capital is Brussels.", "It is home to the headquarters of NATO and the European Union.", "The Carnival of Binche is a UNESCO-listed festival featuring the iconic Gille figures."],
+    "Bolivia":     ["Its capital cities are Sucre (constitutional) and La Paz (seat of government).", "It is home to the Salar de Uyuni, the world's largest salt flat.", "Evo Morales was its first indigenous president, serving from 2006 to 2019."],
+    "Bosnia and Herzegovina": ["Its capital is Sarajevo.", "Sarajevo hosted the 1984 Winter Olympics.", "The Old Bridge (Stari Most) in Mostar is a UNESCO World Heritage site."],
+    "Botswana":    ["Its capital is Gaborone.", "President Duma Boko has led the country since 2024.", "The Okavango Delta, a UNESCO World Heritage site, is one of Africa's greatest wildlife destinations."],
+    "Brazil":      ["Its capital is Brasília.", "The Rio Carnival is the world's largest carnival celebration.", "Pelé, widely considered the greatest footballer ever, was Brazilian."],
+    "Bulgaria":    ["Its capital is Sofia.", "The Rose Festival in Kazanlak celebrates the country's famous rose oil harvest.", "Dimitar Berbatov, the famous footballer, was born here."],
+    "Cabo Verde":  ["Its capital is Praia.", "Singer Cesária Évora, known as the 'Barefoot Diva', was from here.", "It is an archipelago of ten volcanic islands in the Atlantic Ocean off West Africa."],
+    "Cambodia":    ["Its capital is Phnom Penh.", "Angkor Wat, the world's largest religious monument, is located here.", "The Khmer New Year (Khmer: Chaul Chnam Thmey) is the biggest national festival."],
+    "Cameroon":    ["Its capital is Yaoundé.", "Football legend Roger Milla famously danced at corner flags during the 1990 World Cup.", "It is often called 'Africa in miniature' for its diverse landscapes and climates."],
+    "Canada":      ["Its capital is Ottawa.", "Prime Minister Justin Trudeau led the country for nearly a decade.", "The Calgary Stampede is one of the world's largest rodeo and outdoor shows."],
+    "Central African Republic": ["Its capital is Bangui.", "It borders six countries including Chad, Sudan, and the Democratic Republic of Congo.", "It is one of the world's largest producers of diamonds."],
+    "Chad":        ["Its capital is N'Djamena.", "Lake Chad, which the country is named after, was once one of Africa's largest lakes but has shrunk dramatically.", "President Mahamat Idriss Déby has led the country since 2021."],
+    "Chile":       ["Its capital is Santiago.", "It is the world's longest country from north to south, stretching over 4,000 km.", "Easter Island (Rapa Nui), famous for its giant Moai statues, belongs to this country."],
+    "China":       ["Its capital is Beijing.", "President Xi Jinping has led the country since 2012.", "The Chinese New Year (Spring Festival) is the world's largest annual human migration event."],
+    "Colombia":    ["Its capital is Bogotá.", "Shakira and Gabriel García Márquez (author of 'One Hundred Years of Solitude') are both from here.", "The Barranquilla Carnival is the second largest carnival in the world after Rio."],
+    "Costa Rica":  ["Its capital is San José.", "It has no standing army — it abolished its military in 1948.", "About 25% of its land is protected as national parks or reserves."],
+    "Croatia":     ["Its capital is Zagreb.", "It is famous for its Dalmatian Coast along the Adriatic Sea.", "The Dubrovnik Old City is a UNESCO World Heritage site and filming location for Game of Thrones."],
+    "Czechia":     ["Its capital is Prague.", "President Petr Pavel has led the country since 2023.", "Prague Castle is the largest ancient castle complex in the world."],
+    "Denmark":     ["Its capital is Copenhagen.", "Queen Margrethe II reigned for over 50 years before abdicating in 2024.", "The LEGO brick was invented here, in Billund."],
+    "Ecuador":     ["Its capital is Quito.", "The Galápagos Islands, which inspired Charles Darwin's theory of evolution, belong to this country.", "It sits directly on the equator — its name means 'equator' in Spanish."],
+    "Egypt":       ["Its capital is Cairo.", "The Pyramids of Giza and the Sphinx are located here.", "The ancient pharaoh Tutankhamun's tomb was discovered here in 1922."],
+    "El Salvador": ["Its capital is San Salvador.", "It became the first country in the world to adopt Bitcoin as legal tender, in 2021.", "The Día de los Muertos (Day of the Dead) festival is widely celebrated here."],
+    "Eritrea":     ["Its capital is Asmara.", "It gained independence from Ethiopia in 1993 after a 30-year war.", "Asmara is known for its well-preserved Italian Art Deco architecture."],
+    "Estonia":     ["Its capital is Tallinn.", "It was the first country to hold a legally binding election over the internet, in 2005.", "The Estonian Song Festival (Laulupidu) is a massive choral event held every five years."],
+    "Eswatini":    ["Its capital is Mbabane.", "King Mswati III is one of the world's last absolute monarchs.", "The Umhlanga (Reed Dance) ceremony is a major annual cultural event."],
+    "Ethiopia":    ["Its capital is Addis Ababa.", "Haile Selassie, revered as a god by Rastafarians, was Emperor here.", "It uses a unique calendar that is about 7–8 years behind the Gregorian calendar."],
+    "Finland":     ["Its capital is Helsinki.", "Father Christmas (Santa Claus) is officially said to live in Rovaniemi, Lapland.", "It has the most heavy metal bands per capita of any country in the world."],
+    "France":      ["Its capital is Paris.", "President Emmanuel Macron has led the country since 2017.", "The Tour de France cycling race is one of the world's most iconic sporting events."],
+    "Gabon":       ["Its capital is Libreville.", "President Brice Oligui Nguema has led the country since a 2023 coup.", "It is home to Lopé National Park, a UNESCO World Heritage site with forest elephants and gorillas."],
+    "Georgia":     ["Its capital is Tbilisi.", "It is considered one of the birthplaces of wine, with an 8,000-year winemaking tradition.", "The ancient cave city of Uplistsikhe dates back to the early Iron Age."],
+    "Germany":     ["Its capital is Berlin.", "Chancellor Olaf Scholz leads the country.", "Oktoberfest in Munich is the world's largest folk festival, attracting millions of visitors annually."],
+    "Ghana":       ["Its capital is Accra.", "Kofi Annan, former Secretary-General of the United Nations, was from here.", "It was the first sub-Saharan African country to gain independence, in 1957."],
+    "Greece":      ["Its capital is Athens.", "The Athens Olympics in 2004 returned the Games to their birthplace.", "The Carnival of Patras is one of Europe's largest carnivals."],
+    "Guatemala":   ["Its capital is Guatemala City.", "It is home to the ancient Mayan city of Tikal, a UNESCO World Heritage site.", "Rigoberta Menchú, a Nobel Peace Prize laureate, is from here."],
+    "Guinea":      ["Its capital is Conakry.", "President Mamadi Doumbouya has led the country since a 2021 coup.", "It borders Sierra Leone, Liberia, Côte d'Ivoire, Mali, Senegal, and Guinea-Bissau."],
+    "Guinea-Bissau":["Its capital is Bissau.", "The Bijagós Archipelago, a UNESCO Biosphere Reserve, is located here.", "It is one of the world's ten poorest countries by GDP per capita."],
+    "Haiti":       ["Its capital is Port-au-Prince.", "It was the first Black republic and the first Caribbean nation to gain independence, in 1804.", "The Haitian Carnival is a massive annual celebration held before Lent."],
+    "Honduras":    ["Its capital is Tegucigalpa.", "The ancient Mayan city of Copán, famous for its intricately carved stelae, is located here.", "It borders Guatemala, El Salvador, and Nicaragua."],
+    "Hungary":     ["Its capital is Budapest.", "Prime Minister Viktor Orbán has led the country since 2010.", "The Budapest Christmas Market is one of Europe's most beautiful festive markets."],
+    "Iceland":     ["Its capital is Reykjavik.", "It is the most sparsely populated country in Europe.", "The Northern Lights (Aurora Borealis) are a famous natural attraction here."],
+    "India":       ["Its capital is New Delhi.", "Prime Minister Narendra Modi has led the country since 2014.", "The Diwali festival of lights and the Holi colour festival are celebrated here by hundreds of millions."],
+    "Indonesia":   ["Its capital is Jakarta (being moved to Nusantara).", "It is the world's largest archipelago nation, with over 17,000 islands.", "The Bali Arts Festival is an annual celebration of Balinese music, dance, and crafts."],
+    "Iran":        ["Its capital is Tehran.", "Supreme Leader Ali Khamenei has led the country since 1989.", "The ancient ruins of Persepolis, capital of the Achaemenid Empire, are located here."],
+    "Iraq":        ["Its capital is Baghdad.", "The ancient city of Babylon and the 'Cradle of Civilisation' (Mesopotamia) are located here.", "The Yazidi community celebrates the Eid Êzîd festival at the Lalish temple in northern Iraq."],
+    "Ireland":     ["Its capital is Dublin.", "Saint Patrick's Day on 17 March is a national holiday celebrated worldwide.", "U2, one of the world's best-selling music acts, is from Dublin."],
+    "Israel":      ["Its capital is Jerusalem.", "Prime Minister Benjamin Netanyahu has been a dominant political figure for decades.", "The Dead Sea, the lowest point on Earth's surface, is located here."],
+    "Italy":       ["Its capital is Rome.", "The Venice Carnival is one of the world's most famous and spectacular festivals.", "Pope Francis leads the Catholic Church from Vatican City, within Rome."],
+    "Jamaica":     ["Its capital is Kingston.", "Usain Bolt, the world's fastest man, is from here.", "Bob Marley and the reggae music genre originated here."],
+    "Japan":       ["Its capital is Tokyo.", "Emperor Naruhito ascended to the Chrysanthemum Throne in 2019.", "The cherry blossom (sakura) season draws millions of visitors each spring."],
+    "Jordan":      ["Its capital is Amman.", "King Abdullah II has reigned since 1999.", "The ancient city of Petra, carved into rose-red rock, is one of the world's most iconic archaeological sites."],
+    "Kazakhstan":  ["Its capital is Astana.", "President Kassym-Jomart Tokayev has led the country since 2019.", "It is the world's largest landlocked country by area."],
+    "Kenya":       ["Its capital is Nairobi.", "It is famous for the Great Migration, when millions of wildebeest cross the Masai Mara.", "Wangari Maathai, the first African woman to win the Nobel Peace Prize, was from here."],
+    "Kuwait":      ["Its capital is Kuwait City.", "The Emir of Kuwait, Sheikh Mishal Al-Ahmad Al-Sabah, heads the state.", "It was liberated from Iraqi occupation in 1991 during the Gulf War."],
+    "Kyrgyzstan":  ["Its capital is Bishkek.", "The World Nomad Games are held here, celebrating traditional nomadic sports.", "Lake Issyk-Kul is one of the world's largest alpine lakes and never freezes."],
+    "Laos":        ["Its capital is Vientiane.", "The Boun Pi Mai (Lao New Year) water festival is the biggest celebration of the year.", "Luang Prabang, a UNESCO World Heritage city, sits at the confluence of the Mekong and Nam Khan rivers."],
+    "Latvia":      ["Its capital is Riga.", "The Riga Art Nouveau district is one of Europe's finest collections of Art Nouveau architecture.", "The Latvian Song and Dance Festival, held every five years, is a UNESCO cultural heritage event."],
+    "Lebanon":     ["Its capital is Beirut.", "Beirut was once known as the 'Paris of the Middle East' for its cosmopolitan culture.", "The Cedar tree is the national symbol and appears on the flag."],
+    "Lesotho":     ["Its capital is Maseru.", "King Letsie III has reigned since 1996.", "It is the only country in the world situated entirely above 1,000 metres in elevation."],
+    "Liberia":     ["Its capital is Monrovia.", "It was founded in the 1820s as a home for freed American slaves.", "Ellen Johnson Sirleaf was Africa's first elected female head of state, serving as president from 2006 to 2018."],
+    "Libya":       ["Its capital is Tripoli.", "The ancient Roman ruins of Leptis Magna are among the best-preserved in the world.", "The Sahara Desert covers most of its territory."],
+    "Lithuania":   ["Its capital is Vilnius.", "Vilnius Old Town is a UNESCO World Heritage site known for its stunning Baroque architecture.", "It was the first Soviet republic to declare independence from the USSR, in 1990."],
+    "Luxembourg":  ["Its capital is Luxembourg City.", "Grand Duke Henri has been the head of state since 2000.", "Luxembourg City's Casemates du Bock — a network of underground fortifications — are a UNESCO World Heritage site."],
+    "Madagascar":  ["Its capital is Antananarivo.", "Over 90% of its wildlife, including lemurs, is found nowhere else on Earth.", "The Avenue of the Baobabs is one of the most photographed natural landscapes in Africa."],
+    "Malawi":      ["Its capital is Lilongwe.", "Lake Malawi, a UNESCO World Heritage site, is known as the 'Lake of Stars'.", "It is known as the 'Warm Heart of Africa' for its friendly people."],
+    "Malaysia":    ["Its capital is Kuala Lumpur.", "The Petronas Twin Towers in Kuala Lumpur were the world's tallest buildings from 1998 to 2004.", "The Hari Raya Aidilfitri festival marking the end of Ramadan is the most widely celebrated holiday."],
+    "Mali":        ["Its capital is Bamako.", "Timbuktu, a UNESCO World Heritage site and historic centre of Islamic scholarship, is located here.", "The Festival in the Desert (Festival au Désert) was a famous annual music event held near Timbuktu."],
+    "Malta":       ["Its capital is Valletta.", "Valletta is the EU's smallest national capital and a UNESCO World Heritage site.", "The Malta Carnival is one of the oldest in Europe, dating back to the 15th century."],
+    "Mauritania":  ["Its capital is Nouakchott.", "The Richat Structure ('Eye of Africa'), a massive geological formation visible from space, is located here.", "Chinguetti, an ancient Saharan trading city, is a UNESCO World Heritage site."],
+    "Mauritius":   ["Its capital is Port Louis.", "The dodo bird, now extinct, was native to this island.", "It is home to one of the world's highest concentrations of millionaires per capita."],
+    "Mexico":      ["Its capital is Mexico City.", "President Claudia Sheinbaum became the country's first female president in 2024.", "The Día de los Muertos (Day of the Dead) festival is a UNESCO Intangible Cultural Heritage."],
+    "Moldova":     ["Its capital is Chișinău.", "It is home to Mileștii Mici, which holds the world's largest wine cellar by bottle count.", "The country is sandwiched between Romania and Ukraine."],
+    "Mongolia":    ["Its capital is Ulaanbaatar.", "Genghis Khan, founder of the largest contiguous land empire in history, was from here.", "The Naadam Festival, celebrating wrestling, archery, and horse racing, is held every July."],
+    "Montenegro":  ["Its capital is Podgorica.", "The Bay of Kotor is a stunning fjord-like inlet and a UNESCO World Heritage site.", "It is one of Europe's youngest independent states, gaining independence in 2006."],
+    "Morocco":     ["Its capital is Rabat.", "King Mohammed VI has reigned since 1999.", "The Marrakech Carnival and the Fes Festival of World Sacred Music are famous annual events."],
+    "Mozambique":  ["Its capital is Maputo.", "It has a coastline stretching over 2,700 km along the Indian Ocean.", "Maputo was designed by Gustave Eiffel, the same engineer who designed the Eiffel Tower."],
+    "Myanmar":     ["Its capital is Naypyidaw.", "The Shwedagon Pagoda in Yangon is one of the world's most sacred Buddhist sites.", "The Thingyan water festival (Burmese New Year) is one of the biggest celebrations of the year."],
+    "Namibia":     ["Its capital is Windhoek.", "The Namib Desert, the world's oldest desert, runs along its entire Atlantic coast.", "Etosha National Park is one of Africa's greatest wildlife sanctuaries."],
+    "Nepal":       ["Its capital is Kathmandu.", "Mount Everest, the world's highest peak, is on its border with China.", "The Dashain and Tihar festivals are the most celebrated events of the year."],
+    "Netherlands": ["Its capital is Amsterdam.", "King Willem-Alexander has been on the throne since 2013.", "King's Day (Koningsdag) on 27 April is a huge national street party celebrated across the country."],
+    "Nicaragua":   ["Its capital is Managua.", "It has more lakes than any other Central American country.", "La Purísima, a December festival in honour of the Virgin Mary, is the biggest celebration of the year."],
+    "Niger":       ["Its capital is Niamey.", "The Tuareg people's Cure Salée festival — a gathering of nomadic herders — is held annually.", "It borders seven countries and is one of the world's hottest nations."],
+    "Nigeria":     ["Its capital is Abuja.", "It is Africa's most populous country, with over 220 million people.", "Afrobeats music, popularised globally by artists like Burna Boy and Wizkid, originates here."],
+    "North Korea": ["Its capital is Pyongyang.", "Kim Jong-un has led the country since 2011.", "The Arirang Mass Games are a vast choreographed spectacle involving tens of thousands of performers."],
+    "North Macedonia":["Its capital is Skopje.", "Alexander the Great was born in the ancient kingdom of Macedon, in what is now this country.", "Skopje's city centre was dramatically rebuilt after the 2010 'Skopje 2014' urban project."],
+    "Norway":      ["Its capital is Oslo.", "King Harald V has reigned since 1991.", "The Nobel Peace Prize is awarded in Oslo every December."],
+    "Oman":        ["Its capital is Muscat.", "Sultan Haitham bin Tariq has led the country since 2020.", "Khor Rori (ancient Sumhuram), a UNESCO World Heritage site, was once a major frankincense trading port."],
+    "Pakistan":    ["Its capital is Islamabad.", "Cricket is the country's most popular sport and a national passion.", "The Lahore Festival (Lahorite) and Basant kite festival are iconic cultural events."],
+    "Palestine":   ["Its capital is East Jerusalem (claimed); Ramallah is the administrative centre.", "Bethlehem, birthplace of Jesus Christ, is located here.", "The olive tree is a powerful national symbol, representing rootedness and resilience."],
+    "Panama":      ["Its capital is Panama City.", "The Panama Canal, connecting the Atlantic and Pacific Oceans, runs through this country.", "The Carnival of Panama is one of the most exuberant celebrations in Latin America."],
+    "Paraguay":    ["Its capital is Asunción.", "The Itaipu Dam, one of the world's largest hydroelectric power stations, is located on its border with Brazil.", "Guaraní is co-official with Spanish, and the majority of the population speaks it as a first language."],
+    "Peru":        ["Its capital is Lima.", "Machu Picchu, the ancient Inca citadel, is one of the world's most visited archaeological sites.", "The Inti Raymi (Festival of the Sun) is an ancient Inca ceremony still celebrated every June."],
+    "Philippines": ["Its capital is Manila.", "It has over 7,600 islands, making it one of the world's largest archipelago nations.", "The Ati-Atihan Festival in Kalibo is known as the 'Mother of All Philippine Festivals'."],
+    "Poland":      ["Its capital is Warsaw.", "Pope John Paul II was born Karol Wojtyła in Wadowice.", "The Pierogi Festival in Kraków celebrates Poland's beloved dumplings every August."],
+    "Portugal":    ["Its capital is Lisbon.", "Cristiano Ronaldo, one of the greatest footballers of all time, is from Madeira.", "The Feast of Saint Anthony in Lisbon is the city's biggest street festival, held every June."],
+    "Qatar":       ["Its capital is Doha.", "Emir Tamim bin Hamad Al Thani has ruled since 2013.", "It hosted the 2022 FIFA World Cup — the first in the Middle East and the first in Arab World."],
+    "Romania":     ["Its capital is Bucharest.", "Transylvania, the region associated with the Dracula legend, is located here.", "The Sighișoara Medieval Festival celebrates the town's rich Saxon heritage."],
+    "Russia":      ["Its capital is Moscow.", "President Vladimir Putin has dominated Russian politics for over two decades.", "The Bolshoi Ballet in Moscow is one of the world's most famous and prestigious ballet companies."],
+    "Rwanda":      ["Its capital is Kigali.", "President Paul Kagame has led the country since 2000.", "It is known as the 'Land of a Thousand Hills' (Pays des Mille Collines)."],
+    "Saudi Arabia":["Its capital is Riyadh.", "King Salman bin Abdulaziz Al Saud is the monarch; Crown Prince Mohammed bin Salman is the de facto ruler.", "The Hajj pilgrimage to Mecca is the largest annual gathering of people on Earth."],
+    "Senegal":     ["Its capital is Dakar.", "Léopold Sédar Senghor, a world-renowned poet and philosopher, was the country's first president.", "The Paris-Dakar Rally, one of the world's toughest motor races, was originally routed here."],
+    "Serbia":      ["Its capital is Belgrade.", "Novak Djokovic, one of the greatest tennis players of all time, is from Belgrade.", "The EXIT music festival in Novi Sad is one of Europe's most acclaimed summer festivals."],
+    "Sierra Leone":["Its capital is Freetown.", "Freetown was founded in 1792 as a home for freed slaves.", "The Bintumani Peak, the highest point in West Africa west of Mount Cameroon, is located here."],
+    "Singapore":   ["Its capital is Singapore (city-state).", "Prime Minister Lawrence Wong has led the country since 2024.", "The Singapore Grand Prix is the only Formula 1 night race on the calendar."],
+    "Slovakia":    ["Its capital is Bratislava.", "Bratislava Castle overlooks the capital and the Danube River.", "The Pohoda Festival is one of Central Europe's most celebrated music and arts festivals."],
+    "Slovenia":    ["Its capital is Ljubljana.", "Lake Bled, with its island church and medieval castle, is one of Europe's most photographed landscapes.", "It was the first former Yugoslav republic to join the European Union, in 2004."],
+    "Somalia":     ["Its capital is Mogadishu.", "It has the longest coastline of any African country.", "Somali culture has a rich oral poetry tradition — poets are highly respected figures."],
+    "South Africa":["Its capital cities are Pretoria (executive), Cape Town (legislative), and Bloemfontein (judicial).", "Nelson Mandela became president in 1994 after 27 years in prison.", "The Cape of Good Hope and Table Mountain are iconic landmarks."],
+    "South Korea": ["Its capital is Seoul.", "President Yoon Suk-yeol leads the country.", "The K-pop music industry and the Boryeong Mud Festival are globally known cultural exports."],
+    "Spain":       ["Its capital is Madrid.", "King Felipe VI has reigned since 2014.", "La Tomatina (the tomato-throwing festival) and the Running of the Bulls in Pamplona are world-famous events."],
+    "Sri Lanka":   ["Its capital is Sri Jayawardenepura Kotte; Colombo is the largest city.", "The Esala Perahera in Kandy is one of Asia's oldest and most spectacular Buddhist festivals.", "It is the world's largest tea exporter and the source of famous Ceylon tea."],
+    "Sudan":       ["Its capital is Khartoum.", "It has more ancient pyramids than Egypt — over 200 pyramids of the Nubian kingdoms.", "The Blue and White Nile rivers meet at Khartoum."],
+    "Sweden":      ["Its capital is Stockholm.", "King Carl XVI Gustaf has reigned since 1973.", "The Nobel Prize ceremony is held in Stockholm every December."],
+    "Switzerland": ["Its capital is Bern.", "The World Economic Forum is held annually in Davos.", "Roger Federer, one of the greatest tennis players of all time, is from Basel."],
+    "Syria":       ["Its capital is Damascus.", "Damascus is one of the oldest continuously inhabited cities in the world.", "The ancient city of Palmyra (Tadmur) is a UNESCO World Heritage site."],
+    "Taiwan":      ["Its capital is Taipei.", "The Taipei 101 skyscraper was the world's tallest building from 2004 to 2010.", "The Lantern Festival (Pingxi Sky Lantern Festival) is a famous annual celebration."],
+    "Tajikistan":  ["Its capital is Dushanbe.", "The Pamir Mountains, known as the 'Roof of the World', cover much of the country.", "Navruz, the Persian New Year on 21 March, is the biggest national celebration."],
+    "Tanzania":    ["Its capital is Dodoma; Dar es Salaam is the largest city.", "Mount Kilimanjaro, Africa's highest peak, is located here.", "The Serengeti National Park and the Great Migration are world-famous wildlife spectacles."],
+    "Thailand":    ["Its capital is Bangkok.", "King Vajiralongkorn (Rama X) has reigned since 2016.", "Songkran, the Thai New Year water festival in April, is one of the world's most joyous celebrations."],
+    "Togo":        ["Its capital is Lomé.", "The Voodoo Festival on 10 January is a major national celebration.", "Lomé is one of the few African capitals located directly on the coast of the ocean."],
+    "Tunisia":     ["Its capital is Tunis.", "The ancient city of Carthage, rival of Rome, is located near Tunis.", "The Dougga archaeological site is North Africa's best-preserved Roman city."],
+    "Turkey":      ["Its capital is Ankara.", "President Recep Tayyip Erdoğan has led the country since 2003.", "The Istanbul Tulip Festival every April is one of the city's most spectacular seasonal events."],
+    "Turkmenistan":["Its capital is Ashgabat.", "The Darvaza Gas Crater, nicknamed the 'Door to Hell', has been burning since 1971.", "Ashgabat holds the record for the most white marble-clad buildings in the world."],
+    "Uganda":      ["Its capital is Kampala.", "President Yoweri Museveni has led the country since 1986.", "Bwindi Impenetrable National Park is home to almost half the world's remaining mountain gorillas."],
+    "Ukraine":     ["Its capital is Kyiv.", "President Volodymyr Zelensky has led the country since 2019.", "The Kyiv Pechersk Lavra (Monastery of the Caves) is one of the holiest sites in Eastern Orthodox Christianity."],
+    "United Arab Emirates": ["Its capital is Abu Dhabi.", "Sheikh Mohamed bin Zayed Al Nahyan is the President of the UAE.", "The Dubai Shopping Festival and the Abu Dhabi Grand Prix are globally famous events."],
+    "United Kingdom": ["Its capital is London.", "King Charles III ascended to the throne in 2022.", "Glastonbury Festival is one of the world's most famous music festivals."],
+    "United States": ["Its capital is Washington D.C.", "Joe Biden served as the 46th President; Donald Trump is the 47th.", "Thanksgiving, celebrated on the fourth Thursday of November, is the country's most important family holiday."],
+    "Uruguay":     ["Its capital is Montevideo.", "It hosted the first ever FIFA World Cup in 1930 — and won it.", "It was one of the first countries in the world to fully legalise cannabis."],
+    "Uzbekistan":  ["Its capital is Tashkent.", "Samarkand, one of the great cities of the ancient Silk Road, is located here.", "The Navruz spring festival on 21 March is the most widely celebrated holiday."],
+    "Venezuela":   ["Its capital is Caracas.", "Angel Falls, the world's highest uninterrupted waterfall, is located here.", "President Nicolás Maduro has led the country since 2013."],
+    "Vietnam":     ["Its capital is Hanoi.", "The Tết (Lunar New Year) festival is the country's most important celebration.", "Ha Long Bay, a UNESCO World Heritage site, is famous for its thousands of limestone islands."],
+    "Yemen":       ["Its capital is Sana'a.", "Sana'a Old City, a UNESCO World Heritage site, is famous for its tower houses decorated with geometric patterns.", "The island of Socotra, known as the 'Galápagos of the Indian Ocean', belongs to this country."],
+    "Zambia":      ["Its capital is Lusaka.", "Victoria Falls, one of the Seven Natural Wonders of the World, is on its border with Zimbabwe.", "Kenneth Kaunda was the country's first president after independence in 1964."],
+    "Zimbabwe":    ["Its capital is Harare.", "Victoria Falls, known locally as 'Mosi-oa-Tunya' (The Smoke That Thunders), is on its border with Zambia.", "President Emmerson Mnangagwa has led the country since 2017."],
+    "Andorra":     ["Its capital is Andorra la Vella.", "It is a tiny co-principality in the Pyrenees, co-ruled by the President of France and the Bishop of Urgell.", "It is one of the world's top destinations for duty-free shopping."],
+    "Bahrain":     ["Its capital is Manama.", "King Hamad bin Isa Al Khalifa has reigned since 1999.", "The Bahrain Grand Prix at the Sakhir Circuit is one of the Formula 1 season openers."],
+    "Israel":      ["Its capital is Jerusalem.", "Prime Minister Benjamin Netanyahu has been a dominant figure for decades.", "The Dead Sea, the lowest point on Earth's surface, is located here."],
+    "New Zealand": ["Its capital is Wellington.", "The Haka, performed by the All Blacks rugby team before matches, is one of sport's most iconic rituals.", "The Lord of the Rings and Hobbit film trilogies were filmed here."],
+    "Latvia":      ["Its capital is Riga.", "Riga's Art Nouveau district is one of the finest in Europe.", "The Latvian Song and Dance Festival, a UNESCO heritage event, is held every five years."],
+    "Lithuania":   ["Its capital is Vilnius.", "It was the first Soviet republic to declare independence from the USSR, in 1990.", "The Hill of Crosses near Šiauliai, covered in over 100,000 crosses, is a major pilgrimage site."],
+    "Panama":      ["Its capital is Panama City.", "The Panama Canal, connecting the Atlantic and Pacific Oceans, runs through this country.", "The Carnival of Panama is one of the most exuberant celebrations in Latin America."],
+    "Iceland":     ["Its capital is Reykjavik.", "Reykjavik is the world's most northerly capital city.", "The Northern Lights (Aurora Borealis) are a famous attraction here in winter."],
+    "Malta":       ["Its capital is Valletta.", "Valletta is the EU's smallest national capital and a UNESCO World Heritage site.", "The Malta Carnival is one of the oldest in Europe, dating back to the 15th century."],
+};
 
-    // Build meaningful hints based on actual country properties, referencing
-    // category-adjacent facts so clues are genuinely helpful
-    if (p.landlocked)      hints.push("This country has no coastline.");
-    if (p.oil_exporter)    hints.push("This country is a significant crude oil exporter.");
-    if (p.agri_15pct)      hints.push("Agriculture makes up a large share of this country's economy.");
-    if (p.tourist_top20)   hints.push("This is one of the world's top 20 tourist destinations.");
-    if (p.trade_surplus)   hints.push("This country consistently exports more than it imports.");
-    if (p.high_tech_exp)   hints.push("High-technology products make up a notable share of its exports.");
-    if (p.stable_cur)      hints.push("Its currency is considered stable and low-volatility.");
-    if (p.low_corrupt)     hints.push("It scores above 70 on the Corruption Perceptions Index.");
-    if (p.fin_center)      hints.push("It hosts a major international financial centre.");
-    if (p.aging_pop)       hints.push("Its median population age is above 40 years.");
-    if (p.rnd_high)        hints.push("It invests over 2% of GDP in research and development.");
-    if (p.high_pub_debt)   hints.push("Government debt exceeds 100% of this country's GDP.");
-    if (p.high_unemp)      hints.push("This country has an unemployment rate above 10%.");
-    if (p.remittance_high) hints.push("It receives substantial remittances from citizens living abroad.");
-    if (p.high_pop)        hints.push("This country has over 100 million people.");
-    if (!p.developed && !p.agri_15pct && !p.landlocked) hints.push("It is an emerging market with an urban-oriented economy.");
-    if (p.gini_high)       hints.push("Income inequality here is high (Gini above 0.40).");
-    if (p.service_dom)     hints.push("The service sector accounts for over 60% of its GDP.");
-    if (p.low_unemp)       hints.push("Unemployment is below 5% in this country.");
-    if (p.developed && p.high_internet) hints.push("It has high internet penetration (over 80%).");
-    if (p.mfg_high)        hints.push("Manufacturing is a significant driver of its economy.");
-
-    // Continental/regional hint as fallback
-    const regionHints = {
-        "AF":"It is located in Central Asia.",
-        "DZ":"It is a North African nation.",
-        "AR":"It is in South America.",
-        "AU":"It is in the Asia-Pacific region.",
-        "AT":"It is a Central European nation.",
-        "BD":"It is in South Asia.",
-        "BE":"It is in Western Europe.",
-        "BR":"It is in South America.",
-        "CA":"It is in North America.",
-        "CN":"It is in East Asia.",
-        "DE":"It is in Western Europe.",
-        "EG":"It bridges North Africa and the Middle East.",
-        "ET":"It is in the Horn of Africa.",
-        "FR":"It is in Western Europe.",
-        "GB":"It is in Northern Europe.",
-        "GH":"It is in West Africa.",
-        "IN":"It is in South Asia.",
-        "ID":"It is an archipelago in Southeast Asia.",
-        "IR":"It is in the Middle East.",
-        "IT":"It is in Southern Europe.",
-        "JP":"It is an island nation in East Asia.",
-        "KE":"It is in East Africa.",
-        "KR":"It is in East Asia.",
-        "MX":"It is in North America.",
-        "NG":"It is in West Africa.",
-        "NO":"It is in Northern Europe.",
-        "PK":"It is in South Asia.",
-        "PL":"It is in Central Europe.",
-        "RU":"It spans Eastern Europe and Northern Asia.",
-        "SA":"It is on the Arabian Peninsula.",
-        "SG":"It is a city-state in Southeast Asia.",
-        "ZA":"It is in Southern Africa.",
-        "TH":"It is in Southeast Asia.",
-        "TR":"It bridges Europe and Asia.",
-        "TW":"It is an island in East Asia.",
-        "UA":"It is in Eastern Europe.",
-        "US":"It is in North America.",
-        "VN":"It is in Southeast Asia.",
-    };
-
-    if (hints.length === 0 && regionHints[country.code]) {
-        hints.push(regionHints[country.code]);
+function generateClue(country) {
+    const clues = countryClues[country.name];
+    if (clues && clues.length > 0) {
+        return clues[Math.floor(Math.random() * clues.length)];
     }
-
-    // Pick a random hint that's not directly naming the answer category (avoid being too on-the-nose)
-    const rowProp = rowCat.prop || rowCat.id;
-    const colProp = colCat.prop || colCat.id;
-    const filtered = hints.filter(h => {
-        const lower = h.toLowerCase();
-        return !(lower.includes(rowCat.name.toLowerCase().slice(0,10)) ||
-                 lower.includes(colCat.name.toLowerCase().slice(0,10)));
-    });
-
-    const pool = filtered.length > 0 ? filtered : hints;
-    if (pool.length === 0) return `Think about which country fits both "${rowCat.name}" and "${colCat.name}".`;
-    return pool[Math.floor(Math.random() * pool.length)];
+    // Fallback for any country not in the table
+    return `The capital of this country is worth looking up!`;
 }
 
 // ─────────────────────────────────────────────
@@ -1082,8 +1161,8 @@ let usedCountries = new Set();
 let gridRows = [], gridCols = [];
 
 // Difficulty thresholds: min countries that must match each intersection
-const DIFF_MIN = { easy: 12, medium: 5, hard: 2 };
-const DIFF_MAX = { easy: 999, medium: 999, hard: 999 };
+// All levels are designed to be accessible — even Hard has multiple valid answers
+const DIFF_MIN = { easy: 20, medium: 10, hard: 5 };
 
 function setDifficulty(d) {
     difficulty = d;
@@ -1408,8 +1487,16 @@ function revealClue(r, c, btn) {
     updateStats();
 
     const answer = sampleAnswers[r][c];
-    const clue = generateClue(answer, gridRows[r], gridCols[c]);
-    showMessage(`💡 Clue: ${clue}`, 'clue');
+    const clue = generateClue(answer);
+
+    // Count how many valid answers exist for this cell
+    const validCount = economicData.filter(x => matchesCat(x, gridRows[r]) && matchesCat(x, gridCols[c])).length;
+    const countNote = validCount > 1 ? `  ·  ${validCount} valid answers exist for this cell.` : '';
+
+    const panel = document.getElementById('cluePanel');
+    document.getElementById('clueText').textContent = clue + countNote;
+    panel.classList.remove('hidden');
+
     updateClueButtons();
 }
 
